@@ -13,6 +13,8 @@
 - 2026-01-21: Added a bun-run logic validation script for breathing engine + streak stats (scripts/validate-logic.ts) to keep deterministic checks in repo.
 - 2026-01-21: Added SessionDetailScreen with full session stats (rounds, longest hold, breathing config, reflection), History stack navigation, and pressable list items for drill-down into session details.
 - 2026-01-21: Added accessibility features including AccessibilityProvider hook for system font scale detection, getScaledTypography helper, ScaledText component, and reduced motion toggle in Settings for vestibular comfort.
+- 2026-01-21: Fixed TypeScript compilation errors for Expo SDK 54 compatibility: updated expo-sqlite to use openDatabaseSync/runAsync APIs, fixed useEffect cleanup functions, added ViewStyle array support to Card, and renamed useAccessibility.ts to .tsx for JSX.
 
 ## Needed Manual Human Interventions
-- None.
+- Device testing on web, iOS, and Android to verify all flows work correctly with the expo-sqlite v14+ API changes.
+- Note: expo-sqlite v14+ has known web platform limitations due to WASM file resolution. The app builds and TypeScript compiles successfully for iOS/Android, but web export may require additional configuration or a polyfill for full SQLite functionality.
