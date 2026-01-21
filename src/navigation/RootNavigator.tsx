@@ -9,11 +9,13 @@ import { SafetyScreen } from '../app/SafetyScreen';
 import { BreathSessionScreen } from '../app/BreathSessionScreen';
 import { SessionSummaryScreen } from '../app/SessionSummaryScreen';
 import { ColdExposureScreen } from '../app/ColdExposureScreen';
+import { SessionDetailScreen } from '../app/SessionDetailScreen';
 import { colors } from '../theme';
-import type { HomeStackParamList, RootTabParamList } from './types';
+import type { HistoryStackParamList, HomeStackParamList, RootTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
+const HistoryStack = createNativeStackNavigator<HistoryStackParamList>();
 
 function HomeStackNavigator() {
   return (
@@ -24,6 +26,15 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="SessionSummary" component={SessionSummaryScreen} />
       <HomeStack.Screen name="ColdExposure" component={ColdExposureScreen} />
     </HomeStack.Navigator>
+  );
+}
+
+function HistoryStackNavigator() {
+  return (
+    <HistoryStack.Navigator screenOptions={{ headerShown: false }}>
+      <HistoryStack.Screen name="History" component={HistoryScreen} />
+      <HistoryStack.Screen name="SessionDetail" component={SessionDetailScreen} />
+    </HistoryStack.Navigator>
   );
 }
 
@@ -61,7 +72,7 @@ export function RootNavigator() {
         component={HomeStackNavigator}
         options={{ title: 'Home' }}
       />
-      <Tab.Screen name="History" component={HistoryScreen} />
+      <Tab.Screen name="History" component={HistoryStackNavigator} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );

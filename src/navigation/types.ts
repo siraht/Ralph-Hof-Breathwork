@@ -6,6 +6,11 @@ export type HomeStackParamList = {
   ColdExposure: undefined;
 };
 
+export type HistoryStackParamList = {
+  History: undefined;
+  SessionDetail: { sessionId: string };
+};
+
 export type RootTabParamList = {
   HomeTab: undefined;
   History: undefined;

@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { formatTimer } from '../logic/time';
 import { useSessionStore } from '../state/sessionStore';
 import { colors, spacing, typography } from '../theme';
+import type { HistoryStackParamList } from '../navigation/types';
 
-export function HistoryScreen() {
+type Props = NativeStackScreenProps<HistoryStackParamList, 'History'>;
+
+export function HistoryScreen({ navigation }: Props) {
   const isFocused = useIsFocused();
   const sessions = useSessionStore((state) => state.sessions);
   const stats = useSessionStore((state) => state.stats);
@@ -36,6 +40,7 @@ export function HistoryScreen() {
     <Screen>
       <Text style={styles.title}>History</Text>
       <Text style={styles.subtitle}>Track your sessions and keep your momentum.</Text>
+      <Text style={styles.helper}>Tap a session to see the details.</Text>
 
       <View style={styles.grid}>
         <Card style={[styles.gridCard, styles.gridCardLeft]}>
@@ -61,11 +66,19 @@ export function HistoryScreen() {
             const meta = `${formatDate(session.endedAt)} · ${formatTime(session.endedAt)} · ${durationLabel}`;
             const rounds = session.roundsCompleted ? ` · ${session.roundsCompleted} rounds` : '';
             return (
-              <Card key={session.id} style={styles.listCard} tone={session.type === 'cold' ? 'mist' : 'light'}>
-                <Text style={styles.cardTitle}>{sessionTitle}</Text>
-                <Text style={styles.cardMeta}>{meta}</Text>
-                {session.type === 'breathwork' ? <Text style={styles.cardMeta}>{`Breathing${rounds}`}</Text> : null}
-              </Card>
+              <Pressable
+                key={session.id}
+                onPress={() => navigation.navigate('SessionDetail', { sessionId: session.id })}
+                style={({ pressed }) => [pressed && styles.listButtonPressed]}
+                accessibilityRole="button"
+                accessibilityLabel={`${sessionTitle} session details`}
+              >
+                <Card style={styles.listCard} tone={session.type === 'cold' ? 'mist' : 'light'}>
+                  <Text style={styles.cardTitle}>{sessionTitle}</Text>
+                  <Text style={styles.cardMeta}>{meta}</Text>
+                  {session.type === 'breathwork' ? <Text style={styles.cardMeta}>{`Breathing${rounds}`}</Text> : null}
+                </Card>
+              </Pressable>
             );
           })
         )}
@@ -82,6 +95,11 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textMuted,
     marginTop: spacing.sm,
+  },
+  helper: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
   },
   list: {
     marginTop: spacing.lg,
@@ -106,6 +124,9 @@ const styles = StyleSheet.create({
   },
   listCard: {
     marginBottom: spacing.md,
+  },
+  listButtonPressed: {
+    opacity: 0.82,
   },
   cardTitle: {
     ...typography.title,

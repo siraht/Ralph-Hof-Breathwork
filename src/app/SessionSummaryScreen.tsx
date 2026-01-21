@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Button } from '../components/Button';
@@ -9,7 +11,7 @@ import { formatTimer } from '../logic/time';
 import { useBreathingStore } from '../state/breathingStore';
 import { useSessionStore } from '../state/sessionStore';
 import { colors, spacing, typography } from '../theme';
-import type { HomeStackParamList } from '../navigation/types';
+import type { HomeStackParamList, RootTabParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'SessionSummary'>;
 
@@ -17,6 +19,7 @@ export function SessionSummaryScreen({ navigation }: Props) {
   const result = useBreathingStore((state) => state.result);
   const resetSession = useBreathingStore((state) => state.reset);
   const addBreathSession = useSessionStore((state) => state.addBreathSession);
+  const tabNavigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const [rating, setRating] = useState<number | null>(null);
   const [note, setNote] = useState('');
 
@@ -38,7 +41,7 @@ export function SessionSummaryScreen({ navigation }: Props) {
     const trimmedNote = note.trim();
     await addBreathSession(result, rating, trimmedNote.length > 0 ? trimmedNote : null);
     resetSession();
-    navigation.navigate('History');
+    tabNavigation.navigate('History');
   };
 
   return (
