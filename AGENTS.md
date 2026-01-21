@@ -12,6 +12,7 @@
 - 2026-01-21: Added SQLite-backed session history with streak stats, cold exposure timer logging, and audio/haptic cues with keep-awake during active sessions.
 - 2026-01-21: Added a bun-run logic validation script for breathing engine + streak stats (scripts/validate-logic.ts) to keep deterministic checks in repo.
 - 2026-01-21: Added SessionDetailScreen with full session stats (rounds, longest hold, breathing config, reflection), History stack navigation, and pressable list items for drill-down into session details.
+- 2026-01-21: Added accessibility features including AccessibilityProvider hook for system font scale detection, getScaledTypography helper, ScaledText component, and reduced motion toggle in Settings for vestibular comfort.
 
 ## Needed Manual Human Interventions
 - None.

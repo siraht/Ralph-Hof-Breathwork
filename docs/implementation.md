@@ -51,7 +51,7 @@
 
 6. QA + Polish [IN PROGRESS]
    - Running logic validation tests via Bun.
-   - Accessibility: font scaling, reduced motion needed.
+   - Accessibility: font scaling and reduced motion support done.
    - Manual device testing on web/iOS/Android.
 
 ## Key Implementation Details
