@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
+import { ScaledText } from '../components/ScaledText';
 import { playCue } from '../logic/audioCue';
 import { formatTimer } from '../logic/time';
 import { useSessionStore } from '../state/sessionStore';
@@ -136,9 +137,9 @@ export function ColdExposureScreen({ navigation }: Props) {
       <Text style={styles.subtitle}>Choose a timer and settle your breath before you step into the cold.</Text>
 
       <Card style={styles.timerCard}>
-        <Text style={styles.timerLabel}>Countdown</Text>
-        <Text style={styles.timerValue}>{timerLabel}</Text>
-        <Text style={styles.timerHint}>{`Cold shower · ${selectedPreset.copy.toLowerCase()}`}</Text>
+        <ScaledText variant="caption" style={styles.timerLabel}>Countdown</ScaledText>
+        <ScaledText variant="timer" style={styles.timerValue}>{timerLabel}</ScaledText>
+        <ScaledText variant="body" style={styles.timerHint}>{`Cold shower · ${selectedPreset.copy.toLowerCase()}`}</ScaledText>
       </Card>
 
       <View style={styles.presetRow}>

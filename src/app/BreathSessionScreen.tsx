@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
+import { ScaledText } from '../components/ScaledText';
 import { playCue } from '../logic/audioCue';
 import { buildBreathingTimeline, getBreathingSnapshot } from '../logic/breathingEngine';
 import { formatTimer } from '../logic/time';
@@ -139,11 +140,11 @@ export function BreathSessionScreen({ navigation }: Props) {
       <Text style={styles.subtitle}>Follow the cadence. Let your breath stay soft and circular.</Text>
 
       <View style={styles.timerWrap}>
-        <Text style={styles.round}>{`Round ${activeSnapshot.roundIndex} of ${activeTimeline.totalRounds}`}</Text>
-        <Text style={styles.timer}>{timerValue}</Text>
-        <Text style={styles.phase}>{phaseLabel}</Text>
-        <Text style={styles.breath}>{breathLabel}</Text>
-        <Text style={styles.total}>{`Total remaining ${totalRemainingLabel}`}</Text>
+        <ScaledText variant="caption" style={styles.round}>{`Round ${activeSnapshot.roundIndex} of ${activeTimeline.totalRounds}`}</ScaledText>
+        <ScaledText variant="timer" style={styles.timer}>{timerValue}</ScaledText>
+        <ScaledText variant="title" style={styles.phase}>{phaseLabel}</ScaledText>
+        <ScaledText variant="body" style={styles.breath}>{breathLabel}</ScaledText>
+        <ScaledText variant="caption" style={styles.total}>{`Total remaining ${totalRemainingLabel}`}</ScaledText>
       </View>
 
       <Card style={styles.phaseCard} tone="light">
