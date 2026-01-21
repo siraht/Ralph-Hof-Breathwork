@@ -1,10 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
+import { useSessionStore } from '../state/sessionStore';
 import { useSettingsStore } from '../state/settingsStore';
 import { colors, radius, shadow, spacing, typography } from '../theme';
 import type { HomeStackParamList } from '../navigation/types';
@@ -13,7 +15,16 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
 export function HomeScreen({ navigation }: Props) {
   const safetyAcknowledgedAt = useSettingsStore((state) => state.safetyAcknowledgedAt);
+  const stats = useSessionStore((state) => state.stats);
+  const loaded = useSessionStore((state) => state.loaded);
+  const loadSessions = useSessionStore((state) => state.load);
   const nextBreathRoute = safetyAcknowledgedAt ? 'BreathSession' : 'Safety';
+
+  useEffect(() => {
+    if (!loaded) {
+      void loadSessions();
+    }
+  }, [loadSessions, loaded]);
 
   return (
     <Screen>
@@ -48,11 +59,11 @@ export function HomeScreen({ navigation }: Props) {
       <View style={styles.row}>
         <Card style={[styles.statCard, styles.statCardLeft]}>
           <Text style={styles.statLabel}>Current streak</Text>
-          <Text style={styles.statValue}>0 days</Text>
+          <Text style={styles.statValue}>{`${stats.currentStreak} days`}</Text>
         </Card>
         <Card style={styles.statCard} tone="mist">
           <Text style={styles.statLabel}>Sessions logged</Text>
-          <Text style={styles.statValue}>0</Text>
+          <Text style={styles.statValue}>{stats.totalSessions}</Text>
         </Card>
       </View>
 

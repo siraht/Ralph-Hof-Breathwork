@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
+import * as Haptics from 'expo-haptics';
 
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
+import { playCue } from '../logic/audioCue';
 import { buildBreathingTimeline, getBreathingSnapshot } from '../logic/breathingEngine';
 import { formatTimer } from '../logic/time';
 import { useBreathingStore } from '../state/breathingStore';
@@ -39,8 +42,11 @@ export function BreathSessionScreen({ navigation }: Props) {
   const stopSession = useBreathingStore((state) => state.stopSession);
   const resetSession = useBreathingStore((state) => state.reset);
   const tick = useBreathingStore((state) => state.tick);
+  const audioEnabled = useSettingsStore((state) => state.audioEnabled);
+  const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
 
   const [sessionSafetyConfirmed, setSessionSafetyConfirmed] = useState(false);
+  const lastCueKey = useRef<string | null>(null);
 
   const previewTimeline = useMemo(() => buildBreathingTimeline(defaults), [defaults]);
   const activeTimeline = timeline ?? previewTimeline;
@@ -54,6 +60,39 @@ export function BreathSessionScreen({ navigation }: Props) {
     const id = setInterval(() => tick(Date.now()), 250);
     return () => clearInterval(id);
   }, [status, tick]);
+
+  useEffect(() => {
+    if (status === 'running') {
+      activateKeepAwake();
+      return () => deactivateKeepAwake();
+    }
+    deactivateKeepAwake();
+    return undefined;
+  }, [status]);
+
+  useEffect(() => {
+    if (status === 'idle') {
+      lastCueKey.current = null;
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== 'running' || !snapshot || snapshot.isComplete) {
+      return;
+    }
+    const segment = snapshot.segment;
+    const cueKey = `${segment.type}-${segment.roundIndex}-${segment.breathIndex ?? 0}`;
+    if (cueKey === lastCueKey.current) {
+      return;
+    }
+    lastCueKey.current = cueKey;
+    if (hapticsEnabled) {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    if (audioEnabled) {
+      void playCue();
+    }
+  }, [audioEnabled, hapticsEnabled, snapshot, status]);
 
   useEffect(() => {
     if (status === 'idle') {

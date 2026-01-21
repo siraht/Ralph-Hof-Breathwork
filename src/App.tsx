@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RootNavigator } from './navigation/RootNavigator';
+import { useSessionStore } from './state/sessionStore';
 import { useSettingsStore } from './state/settingsStore';
 import { navigationTheme } from './theme';
 
@@ -25,10 +26,12 @@ export default function App() {
     SpaceMono_400Regular,
   });
   const loadSettings = useSettingsStore((state) => state.load);
+  const loadSessions = useSessionStore((state) => state.load);
 
   useEffect(() => {
     void loadSettings();
-  }, [loadSettings]);
+    void loadSessions();
+  }, [loadSettings, loadSessions]);
 
   if (!fontsLoaded) {
     return null;
