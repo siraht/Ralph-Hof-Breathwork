@@ -8,10 +8,12 @@ import {
 import { SpaceMono_400Regular } from '@expo-google-fonts/space-mono';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RootNavigator } from './navigation/RootNavigator';
+import { useSettingsStore } from './state/settingsStore';
 import { navigationTheme } from './theme';
 
 export default function App() {
@@ -22,6 +24,11 @@ export default function App() {
     SpaceGrotesk_700Bold,
     SpaceMono_400Regular,
   });
+  const loadSettings = useSettingsStore((state) => state.load);
+
+  useEffect(() => {
+    void loadSettings();
+  }, [loadSettings]);
 
   if (!fontsLoaded) {
     return null;

@@ -12,6 +12,7 @@ type ButtonProps = {
   icon?: ReactNode;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  disabled?: boolean;
 };
 
 const variants: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }> = {
@@ -44,20 +45,24 @@ const variants: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }>
   },
 };
 
-export function Button({ label, onPress, variant = 'primary', icon, style, textStyle }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', icon, style, textStyle, disabled }: ButtonProps) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.base,
         variants[variant].container,
         pressed && styles.pressed,
+        disabled && styles.disabled,
         style,
       ]}
     >
       <View style={styles.row}>
         {icon ? <View style={styles.icon}>{icon}</View> : null}
-        <Text style={[styles.label, variants[variant].text, textStyle]}>{label}</Text>
+        <Text style={[styles.label, variants[variant].text, disabled && styles.disabledText, textStyle]}>
+          {label}
+        </Text>
       </View>
     </Pressable>
   );
@@ -75,6 +80,12 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  disabledText: {
+    color: colors.textMuted,
   },
   label: {
     ...typography.title,

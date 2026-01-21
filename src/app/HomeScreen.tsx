@@ -5,12 +5,16 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
+import { useSettingsStore } from '../state/settingsStore';
 import { colors, radius, shadow, spacing, typography } from '../theme';
 import type { HomeStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
 export function HomeScreen({ navigation }: Props) {
+  const safetyAcknowledgedAt = useSettingsStore((state) => state.safetyAcknowledgedAt);
+  const nextBreathRoute = safetyAcknowledgedAt ? 'BreathSession' : 'Safety';
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -27,7 +31,7 @@ export function HomeScreen({ navigation }: Props) {
         <View style={styles.heroActions}>
           <Button
             label="Start Breathwork"
-            onPress={() => navigation.navigate('BreathSession')}
+            onPress={() => navigation.navigate(nextBreathRoute)}
             variant="secondary"
             style={styles.heroButton}
           />

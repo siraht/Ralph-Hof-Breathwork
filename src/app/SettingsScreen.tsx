@@ -1,13 +1,54 @@
-import { useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
+import { breathLimits, type BreathConfig } from '../logic/breathingConfig';
+import { useSettingsStore } from '../state/settingsStore';
 import { colors, spacing, typography } from '../theme';
 
 export function SettingsScreen() {
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const audioEnabled = useSettingsStore((state) => state.audioEnabled);
+  const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
+  const defaults = useSettingsStore((state) => state.defaults);
+  const toggleAudio = useSettingsStore((state) => state.toggleAudio);
+  const toggleHaptics = useSettingsStore((state) => state.toggleHaptics);
+  const updateDefaults = useSettingsStore((state) => state.updateDefaults);
+
+  const steppers = useMemo(
+    () => [
+      {
+        label: 'Rounds',
+        key: 'rounds' as const,
+        min: breathLimits.rounds.min,
+        max: breathLimits.rounds.max,
+      },
+      {
+        label: 'Breaths per round',
+        key: 'breaths' as const,
+        min: breathLimits.breaths.min,
+        max: breathLimits.breaths.max,
+      },
+      {
+        label: 'Hold time (sec)',
+        key: 'holdSec' as const,
+        min: breathLimits.holdSec.min,
+        max: breathLimits.holdSec.max,
+      },
+      {
+        label: 'Recovery (sec)',
+        key: 'recoverySec' as const,
+        min: breathLimits.recoverySec.min,
+        max: breathLimits.recoverySec.max,
+      },
+    ],
+    [],
+  );
+
+  const handleStep = (key: keyof BreathConfig, delta: number) => {
+    const current = defaults[key] ?? 0;
+    updateDefaults({ [key]: current + delta } as Partial<BreathConfig>);
+  };
 
   return (
     <Screen>
@@ -16,18 +57,31 @@ export function SettingsScreen() {
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Breathwork defaults</Text>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Rounds</Text>
-          <Text style={styles.rowValue}>3</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Breaths per round</Text>
-          <Text style={styles.rowValue}>30</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Hold time</Text>
-          <Text style={styles.rowValue}>60 sec</Text>
-        </View>
+        {steppers.map((stepper) => {
+          const value = defaults[stepper.key] ?? 0;
+          return (
+            <View key={stepper.key} style={styles.row}>
+              <Text style={styles.rowLabel}>{stepper.label}</Text>
+              <View style={styles.stepper}>
+                <Pressable
+                  onPress={() => handleStep(stepper.key, -1)}
+                  disabled={value <= stepper.min}
+                  style={({ pressed }) => [styles.stepperButton, pressed && styles.stepperPressed]}
+                >
+                  <Text style={styles.stepperText}>-</Text>
+                </Pressable>
+                <Text style={styles.rowValue}>{value}</Text>
+                <Pressable
+                  onPress={() => handleStep(stepper.key, 1)}
+                  disabled={value >= stepper.max}
+                  style={({ pressed }) => [styles.stepperButton, pressed && styles.stepperPressed]}
+                >
+                  <Text style={styles.stepperText}>+</Text>
+                </Pressable>
+              </View>
+            </View>
+          );
+        })}
       </Card>
 
       <Card style={styles.section} tone="mist">
@@ -36,7 +90,7 @@ export function SettingsScreen() {
           <Text style={styles.rowLabel}>Audio cues</Text>
           <Switch
             value={audioEnabled}
-            onValueChange={setAudioEnabled}
+            onValueChange={toggleAudio}
             trackColor={{ false: colors.stroke, true: colors.glacier }}
             thumbColor={audioEnabled ? colors.deep : colors.textMuted}
           />
@@ -45,7 +99,7 @@ export function SettingsScreen() {
           <Text style={styles.rowLabel}>Haptic cues</Text>
           <Switch
             value={hapticsEnabled}
-            onValueChange={setHapticsEnabled}
+            onValueChange={toggleHaptics}
             trackColor={{ false: colors.stroke, true: colors.glacier }}
             thumbColor={hapticsEnabled ? colors.deep : colors.textMuted}
           />
@@ -75,6 +129,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: spacing.xs,
+    alignItems: 'center',
   },
   toggleRow: {
     flexDirection: 'row',
@@ -84,9 +139,32 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     ...typography.body,
+    flex: 1,
   },
   rowValue: {
     ...typography.title,
+    color: colors.deep,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepperButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.stroke,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.cloud,
+  },
+  stepperPressed: {
+    opacity: 0.7,
+  },
+  stepperText: {
+    ...typography.title,
+    fontSize: 18,
     color: colors.deep,
   },
 });
