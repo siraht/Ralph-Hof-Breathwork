@@ -41,11 +41,12 @@ export function ColdExposureScreen({ navigation }: Props) {
 
   useEffect(() => {
     if (status === 'running') {
-      activateKeepAwake();
-      return () => deactivateKeepAwake();
+      activateKeepAwake().catch(() => {});
+      return () => {
+        deactivateKeepAwake().catch(() => {});
+      };
     }
-    deactivateKeepAwake();
-    return undefined;
+    deactivateKeepAwake().catch(() => {});
   }, [status]);
 
   useEffect(() => {
@@ -150,9 +151,9 @@ export function ColdExposureScreen({ navigation }: Props) {
               key={preset.id}
               onPress={() => setSelectedPreset(preset)}
               disabled={status !== 'idle'}
-              style={[styles.presetCardWrap, index === 0 && styles.presetCardLeft]}
+              style={index === 0 ? [styles.presetCardWrap, styles.presetCardLeft] : styles.presetCardWrap}
             >
-              <Card style={[styles.presetCard, isActive && styles.presetCardActive]} tone="mist">
+              <Card style={isActive ? [styles.presetCard, styles.presetCardActive] : styles.presetCard} tone="mist">
                 <Text style={styles.presetTitle}>{preset.label}</Text>
                 <Text style={styles.presetCopy}>{preset.copy}</Text>
               </Card>
@@ -170,7 +171,7 @@ export function ColdExposureScreen({ navigation }: Props) {
               disabled={status !== 'idle'}
               style={styles.presetCardWrap}
             >
-              <Card style={[styles.presetCard, isActive && styles.presetCardActive]} tone="mist">
+              <Card style={isActive ? [styles.presetCard, styles.presetCardActive] : styles.presetCard} tone="mist">
                 <Text style={styles.presetTitle}>{preset.label}</Text>
                 <Text style={styles.presetCopy}>{preset.copy}</Text>
               </Card>
@@ -200,7 +201,7 @@ export function ColdExposureScreen({ navigation }: Props) {
               label="View History"
               onPress={() => {
                 resetTimer();
-                navigation.navigate('History');
+                navigation.getParent()?.navigate('History');
               }}
               variant="ghost"
               style={styles.secondary}

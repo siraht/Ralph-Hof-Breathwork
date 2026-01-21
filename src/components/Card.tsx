@@ -5,7 +5,7 @@ import { colors, radius, shadow, spacing } from '../theme';
 
 type CardProps = {
   children: ReactNode;
-  style?: ViewStyle;
+  style?: ViewStyle | ViewStyle[];
   tone?: 'light' | 'mist' | 'deep';
 };
 

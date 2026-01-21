@@ -12,7 +12,7 @@ type ScreenProps = {
   variant?: 'default' | 'mist' | 'deep';
 };
 
-const gradientMap: Record<NonNullable<ScreenProps['variant']>, string[]> = {
+const gradientMap: Record<NonNullable<ScreenProps['variant']>, readonly [string, string]> = {
   default: [colors.sand, colors.mist],
   mist: ['#F4FAFB', colors.mist],
   deep: ['#1B3944', '#0E2D37'],

@@ -69,7 +69,7 @@ export function HistoryScreen({ navigation }: Props) {
               <Pressable
                 key={session.id}
                 onPress={() => navigation.navigate('SessionDetail', { sessionId: session.id })}
-                style={({ pressed }) => [pressed && styles.listButtonPressed]}
+                style={({ pressed }) => pressed ? [styles.listButton, styles.listButtonPressed] : styles.listButton}
                 accessibilityRole="button"
                 accessibilityLabel={`${sessionTitle} session details`}
               >
@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
   listCard: {
     marginBottom: spacing.md,
   },
+  listButton: {},
   listButtonPressed: {
     opacity: 0.82,
   },

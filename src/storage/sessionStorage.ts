@@ -1,10 +1,11 @@
-import * as SQLite from 'expo-sqlite';
+import { openDatabaseSync } from 'expo-sqlite';
+import type { SQLiteDatabase } from 'expo-sqlite';
 
 import type { BreathConfig } from '../logic/breathingConfig';
 import type { BreathingStats } from '../logic/breathingEngine';
 import type { SessionResult } from '../state/breathingStore';
 
-const db = SQLite.openDatabase('wimhof.db');
+let db: SQLiteDatabase | null = null;
 let initialized = false;
 
 export type SessionType = 'breathwork' | 'cold';
@@ -37,20 +38,22 @@ type DbSessionRow = {
   completed: number | null;
 };
 
-function runAsync(sql: string, params: Array<string | number | null> = []): Promise<SQLite.SQLResultSet> {
-  return new Promise((resolve, reject) => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        sql,
-        params,
-        (_, result) => resolve(result),
-        (_, error) => {
-          reject(error);
-          return false;
-        },
-      );
-    });
-  });
+function getDb(): SQLiteDatabase {
+  if (!db) {
+    db = openDatabaseSync('wimhof.db');
+  }
+  return db;
+}
+
+async function runAsync(sql: string, params: Array<string | number | null> = []): Promise<void> {
+  const database = getDb();
+  await database.runAsync(sql, params);
+}
+
+async function queryAsync<T>(sql: string, params: Array<string | number | null> = []): Promise<T[]> {
+  const database = getDb();
+  const result = await database.getAllAsync<T>(sql, params);
+  return result as T[];
 }
 
 function toIsoString(value: number): string {
@@ -116,8 +119,7 @@ export async function initSessionStorage(): Promise<void> {
 export async function listSessions(limit = 50): Promise<SessionEntry[]> {
   await initSessionStorage();
   const safeLimit = Math.max(1, Math.min(200, Math.floor(limit)));
-  const result = await runAsync(`SELECT * FROM sessions ORDER BY startedAt DESC LIMIT ${safeLimit};`);
-  const rows = result.rows?._array ?? [];
+  const rows = await queryAsync<DbSessionRow>(`SELECT * FROM sessions ORDER BY startedAt DESC LIMIT ${safeLimit};`);
   return rows.map(mapRow);
 }
 

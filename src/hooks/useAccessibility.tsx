@@ -28,19 +28,11 @@ export function AccessibilityProvider({
 
   useEffect(() => {
     // Get the system font scale (from Accessibility settings)
-    const fetchFontScale = async () => {
+    const fetchFontScale = () => {
       const scale = PixelRatio.getFontScale();
       setFontScale(scale);
     };
     fetchFontScale();
-
-    // Listen for changes in font scale
-    const fontChangeSubscription = PixelRatio.addListener('fontScaleChanged', fetchFontScale);
-    return () => {
-      if (Platform.OS !== 'web') {
-        fontChangeSubscription.remove();
-      }
-    };
   }, []);
 
   useEffect(() => {

@@ -64,11 +64,12 @@ export function BreathSessionScreen({ navigation }: Props) {
 
   useEffect(() => {
     if (status === 'running') {
-      activateKeepAwake();
-      return () => deactivateKeepAwake();
+      activateKeepAwake().catch(() => {});
+      return () => {
+        deactivateKeepAwake().catch(() => {});
+      };
     }
-    deactivateKeepAwake();
-    return undefined;
+    deactivateKeepAwake().catch(() => {});
   }, [status]);
 
   useEffect(() => {
