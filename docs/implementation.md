@@ -20,33 +20,39 @@
   - assets/ (audio, fonts)
 
 ## Milestones
-1. Project Setup
+1. Project Setup [DONE]
    - Create Expo app with TypeScript.
    - Add navigation, fonts, theme tokens, and app structure.
 
-2. Breathing Engine
+2. Breathing Engine [DONE]
    - Implement session state machine: inhale/exhale cycles, hold, recovery.
    - Integrate timers and haptic/audio hooks.
    - Pause/resume and stop handling.
+   - Timeline-based engine with stats tracking.
 
-3. UI Screens
-   - Home screen with primary CTAs.
+3. UI Screens [DONE]
+   - Home screen with primary CTAs and streak display.
    - Breathing session screen with cadence UI and timers.
-   - Summary screen.
-   - History screen (list + calendar view).
+   - Summary screen with rating/notes capture.
+   - History screen (list with session detail navigation).
+   - Session detail screen with full stats breakdown.
    - Settings screen.
+   - Safety acknowledgment screen.
 
-4. Persistence
-   - AsyncStorage for settings.
-   - SQLite for sessions; CRUD utilities.
+4. Persistence [DONE]
+   - AsyncStorage for settings via Zustand.
+   - SQLite for sessions with CRUD utilities.
+   - Session stats helper for streaks/totals.
 
-5. Cold Exposure Timer
-   - Simple timer with presets.
-   - Log as session entry.
+5. Cold Exposure Timer [DONE]
+   - Timer with presets and countdown.
+   - Haptic/audio cues and keep-awake.
+   - Log as session entry with stats.
 
-6. QA + Polish
-   - Accessibility pass (font scaling, reduced motion).
-   - Performance checks for timers and audio.
+6. QA + Polish [IN PROGRESS]
+   - Running logic validation tests via Bun.
+   - Accessibility: font scaling, reduced motion needed.
+   - Manual device testing on web/iOS/Android.
 
 ## Key Implementation Details
 - Breathing state machine should run on a single interval tick to avoid drift.
