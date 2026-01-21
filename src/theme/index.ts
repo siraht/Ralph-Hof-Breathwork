@@ -41,7 +41,7 @@ export const shadow = {
   },
 };
 
-export const typography = {
+const baseTypography = {
   display: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 36,
@@ -70,6 +70,42 @@ export const typography = {
     lineHeight: 24,
   },
 };
+
+export const typography = baseTypography;
+
+/**
+ * Get typography with font scale applied.
+ * Use this to dynamically scale fonts based on user accessibility settings.
+ */
+export function getScaledTypography(fontScale: number) {
+  return {
+    display: {
+      ...baseTypography.display,
+      fontSize: baseTypography.display.fontSize * fontScale,
+      lineHeight: baseTypography.display.lineHeight * fontScale,
+    },
+    title: {
+      ...baseTypography.title,
+      fontSize: baseTypography.title.fontSize * fontScale,
+      lineHeight: baseTypography.title.lineHeight * fontScale,
+    },
+    body: {
+      ...baseTypography.body,
+      fontSize: baseTypography.body.fontSize * fontScale,
+      lineHeight: baseTypography.body.lineHeight * fontScale,
+    },
+    caption: {
+      ...baseTypography.caption,
+      fontSize: baseTypography.caption.fontSize * fontScale,
+      lineHeight: baseTypography.caption.lineHeight * fontScale,
+    },
+    mono: {
+      ...baseTypography.mono,
+      fontSize: baseTypography.mono.fontSize * fontScale,
+      lineHeight: baseTypography.mono.lineHeight * fontScale,
+    },
+  };
+}
 
 export const navigationTheme: Theme = {
   ...DefaultTheme,

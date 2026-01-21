@@ -10,6 +10,7 @@ type SettingsState = StoredSettings & {
   toggleAudio: () => void;
   toggleHaptics: () => void;
   acknowledgeSafety: () => void;
+  toggleReducedMotion: () => void;
 };
 
 function clampDefaults(defaults: Required<BreathConfig>): Required<BreathConfig> {
@@ -29,6 +30,7 @@ function toStoredSettings(state: SettingsState): StoredSettings {
     audioEnabled: state.audioEnabled,
     hapticsEnabled: state.hapticsEnabled,
     safetyAcknowledgedAt: state.safetyAcknowledgedAt,
+    reducedMotionPreferred: state.reducedMotionPreferred,
   };
 }
 
@@ -65,6 +67,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const updated: StoredSettings = {
       ...toStoredSettings(current),
       safetyAcknowledgedAt: new Date().toISOString(),
+    };
+    set(updated);
+    void saveSettings(updated);
+  },
+  toggleReducedMotion: () => {
+    const current = get();
+    const updated: StoredSettings = {
+      ...toStoredSettings(current),
+      reducedMotionPreferred: !current.reducedMotionPreferred,
     };
     set(updated);
     void saveSettings(updated);

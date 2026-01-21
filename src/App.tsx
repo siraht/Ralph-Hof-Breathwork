@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AccessibilityProvider } from './hooks/useAccessibility';
 import { RootNavigator } from './navigation/RootNavigator';
 import { useSessionStore } from './state/sessionStore';
 import { useSettingsStore } from './state/settingsStore';
@@ -27,6 +28,7 @@ export default function App() {
   });
   const loadSettings = useSettingsStore((state) => state.load);
   const loadSessions = useSessionStore((state) => state.load);
+  const reducedMotionPreferred = useSettingsStore((state) => state.reducedMotionPreferred);
 
   useEffect(() => {
     void loadSettings();
@@ -40,10 +42,12 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer theme={navigationTheme}>
-          <RootNavigator />
-        </NavigationContainer>
-        <StatusBar style="dark" />
+        <AccessibilityProvider reducedMotionOverride={reducedMotionPreferred}>
+          <NavigationContainer theme={navigationTheme}>
+            <RootNavigator />
+          </NavigationContainer>
+          <StatusBar style="dark" />
+        </AccessibilityProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

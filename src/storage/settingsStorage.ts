@@ -9,6 +9,7 @@ export type StoredSettings = {
   audioEnabled: boolean;
   hapticsEnabled: boolean;
   safetyAcknowledgedAt: string | null;
+  reducedMotionPreferred: boolean;
 };
 
 export const defaultSettings: StoredSettings = {
@@ -16,6 +17,7 @@ export const defaultSettings: StoredSettings = {
   audioEnabled: true,
   hapticsEnabled: true,
   safetyAcknowledgedAt: null,
+  reducedMotionPreferred: false,
 };
 
 export async function loadSettings(): Promise<StoredSettings> {

@@ -10,9 +10,11 @@ import { colors, spacing, typography } from '../theme';
 export function SettingsScreen() {
   const audioEnabled = useSettingsStore((state) => state.audioEnabled);
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
+  const reducedMotionPreferred = useSettingsStore((state) => state.reducedMotionPreferred);
   const defaults = useSettingsStore((state) => state.defaults);
   const toggleAudio = useSettingsStore((state) => state.toggleAudio);
   const toggleHaptics = useSettingsStore((state) => state.toggleHaptics);
+  const toggleReducedMotion = useSettingsStore((state) => state.toggleReducedMotion);
   const updateDefaults = useSettingsStore((state) => state.updateDefaults);
 
   const steppers = useMemo(
@@ -105,6 +107,22 @@ export function SettingsScreen() {
           />
         </View>
       </Card>
+
+      <Card style={styles.section}>
+        <Text style={styles.sectionTitle}>Accessibility</Text>
+        <View style={styles.toggleRow}>
+          <View style={styles.labelWrapper}>
+            <Text style={styles.rowLabel}>Reduce motion</Text>
+            <Text style={styles.toggleHint}>Minimize animations for vestibular comfort</Text>
+          </View>
+          <Switch
+            value={reducedMotionPreferred}
+            onValueChange={toggleReducedMotion}
+            trackColor={{ false: colors.stroke, true: colors.glacier }}
+            thumbColor={reducedMotionPreferred ? colors.deep : colors.textMuted}
+          />
+        </View>
+      </Card>
     </Screen>
   );
 }
@@ -137,9 +155,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xs,
   },
+  labelWrapper: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
   rowLabel: {
     ...typography.body,
-    flex: 1,
+  },
+  toggleHint: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   rowValue: {
     ...typography.title,
