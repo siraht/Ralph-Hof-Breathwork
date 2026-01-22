@@ -44,3 +44,6 @@ yarn-error.*
 .run/
 .ntm/
 ralph_*.sh
+
+# web export
+dist-web/
