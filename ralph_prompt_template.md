@@ -3,18 +3,20 @@ You are Codex running in /data/projects/wimhof
 
 Your goal is to build a Wim Hof Breathwork app from start to finish, from a spec/implementation plan or even plain idea, to a fully functional, finished product. You are being run in a loop and if/when you end your turn and produce a final output, another iteration will be prompted with this exact prompt to pick back up where you left off.
 
-## Hard invariants (do not violate):
-- Before you do anything, read /AGENTS.md in it's entirety and always act in accordance with it.
-- Read the output of the last agent loop in /.run/ralph_turns.log to determine the current state of the project.
-- Read /docs/appidea.md
-- Read /docs/spec.md
-- Read /docs/implementation.md
-- Check if there are existing Needed Manual Human Interventions in the section below. If there are, check if they have been completed, and if so, remove them. If there are uncompleted interventions, note the blocks and work around them.
-- Build in accordance with your best judgment.
-- If you make decisions about how to build moving forward, realize future iterations will need more context or information, or need to record why you did something in a certain way, record them in /AGENTS.md
-- If you decide to change the implementation plan, change implementation.md
-- Try to always build in alignment with the specs and implementation, but if a legitimately better way to do something comes to mind, you can implement so long as all references to the prior way are modified.
-- Always logically commit all changes with detailed messages
+# BUILDING mode loop lifecycle (follow this order every iteration)
+1) Orient - subagents study docs/* (requirements). Also read /AGENTS.md, read /.run/ralph_turns.log and the last ten lines of /.run/claude_tool_calls.log to determine current state, and scan Needed Manual Human Interventions below.
+2) Read plan - study docs/implementation.md
+3) Select - pick the most important task for this iteration
+4) Investigate - subagents study relevant /src (don't assume not implemented)
+5) Implement - N subagents for file operations
+6) Validate - 1 subagent for build/tests (backpressure)
+7) Update docs/implementation.md - mark task done, note discoveries/bugs
+8) If you make decisions about how to build moving forward, realize future iterations will need more context or information, need to record why you did something in a certain way, or most importantly: learned something: record all of that in /AGENTS.md
+9) Commit - always logically commit changes with detailed messages
+10) Loop ends - context cleared, next iteration starts fresh
+
+## Hard invariants (do not violate)
+- Always build in alignment with /PROJDIR/docs/spec.md (and docs/* if present)
 
 ## Output requirements (end of each iteration):
 - What you worked on + status change
