@@ -4,15 +4,16 @@ export type HomeStackParamList = {
   BreathSession: undefined;
   SessionSummary: undefined;
   ColdExposure: undefined;
+  GuidedBreathing: undefined;
 };
 
 export type HistoryStackParamList = {
-  History: undefined;
+  ResultsTab: undefined;
   SessionDetail: { sessionId: string };
 };
 
 export type RootTabParamList = {
   HomeTab: undefined;
-  History: undefined;
+  ResultsTab: undefined;
   Settings: undefined;
 };

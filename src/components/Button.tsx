@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } fro
 
 import { colors, radius, spacing, typography } from '../theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'pill';
 
 type ButtonProps = {
   label: string;
@@ -13,6 +13,7 @@ type ButtonProps = {
   style?: ViewStyle;
   textStyle?: TextStyle;
   disabled?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 };
 
 const variants: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }> = {
@@ -43,15 +44,52 @@ const variants: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }>
       color: colors.deep,
     },
   },
+  pill: {
+    container: {
+      backgroundColor: 'transparent',
+      borderColor: colors.borderSoft,
+      borderRadius: radius.pill,
+    },
+    text: {
+      color: colors.textMuted,
+    },
+  },
 };
 
-export function Button({ label, onPress, variant = 'primary', icon, style, textStyle, disabled }: ButtonProps) {
+const sizeStyles = {
+  sm: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
+  md: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  lg: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+  },
+};
+
+export function Button({
+  label,
+  onPress,
+  variant = 'primary',
+  icon,
+  style,
+  textStyle,
+  disabled,
+  size = 'md',
+}: ButtonProps) {
+  const baseStyle = variant === 'pill' ? styles.pillBase : styles.base;
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
-        styles.base,
+        baseStyle,
+        sizeStyles[size],
         variants[variant].container,
         pressed && styles.pressed,
         disabled && styles.disabled,
@@ -72,8 +110,12 @@ const styles = StyleSheet.create({
   base: {
     borderRadius: radius.lg,
     borderWidth: 1,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillBase: {
+    borderRadius: radius.pill,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -88,8 +130,8 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   label: {
-    ...typography.title,
-    fontSize: 16,
+    fontFamily: 'SpaceGrotesk_500Medium',
+    fontSize: 14,
   },
   row: {
     flexDirection: 'row',

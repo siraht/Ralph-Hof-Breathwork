@@ -10,7 +10,8 @@ import { useSessionStore } from '../state/sessionStore';
 import { colors, spacing, typography } from '../theme';
 import type { HistoryStackParamList } from '../navigation/types';
 
-type Props = NativeStackScreenProps<HistoryStackParamList, 'History'>;
+// Note: HistoryScreen is preserved as a legacy detail view, ResultsScreen is the new UI
+type Props = NativeStackScreenProps<HistoryStackParamList, 'SessionDetail'>;
 
 export function HistoryScreen({ navigation }: Props) {
   const isFocused = useIsFocused();

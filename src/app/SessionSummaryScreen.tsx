@@ -41,7 +41,7 @@ export function SessionSummaryScreen({ navigation }: Props) {
     const trimmedNote = note.trim();
     await addBreathSession(result, rating, trimmedNote.length > 0 ? trimmedNote : null);
     resetSession();
-    tabNavigation.navigate('History');
+    tabNavigation.navigate('ResultsTab');
   };
 
   return (

@@ -6,7 +6,7 @@ import { colors, radius, shadow, spacing } from '../theme';
 type CardProps = {
   children: ReactNode;
   style?: ViewStyle | ViewStyle[];
-  tone?: 'light' | 'mist' | 'deep';
+  tone?: 'light' | 'mist' | 'deep' | 'frost';
 };
 
 const toneStyles: Record<NonNullable<CardProps['tone']>, ViewStyle> = {
@@ -18,6 +18,9 @@ const toneStyles: Record<NonNullable<CardProps['tone']>, ViewStyle> = {
   },
   deep: {
     backgroundColor: colors.deep,
+  },
+  frost: {
+    backgroundColor: colors.frost,
   },
 };
 
@@ -34,7 +37,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.stroke,
-    ...shadow.soft,
+    borderColor: colors.border,
+    ...shadow.subtle,
   },
 });

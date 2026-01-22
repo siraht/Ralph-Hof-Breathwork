@@ -3,24 +3,18 @@ import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { colors } from '../theme';
+import { colors, screenGradient, spacing } from '../theme';
 
 type ScreenProps = {
   children: ReactNode;
   style?: ViewStyle;
   edges?: Edge[];
-  variant?: 'default' | 'mist' | 'deep';
-};
-
-const gradientMap: Record<NonNullable<ScreenProps['variant']>, readonly [string, string]> = {
-  default: [colors.sand, colors.mist],
-  mist: ['#F4FAFB', colors.mist],
-  deep: ['#1B3944', '#0E2D37'],
+  variant?: 'default' | 'mist' | 'deep' | 'warm';
 };
 
 export function Screen({ children, style, edges = ['top', 'bottom'], variant = 'default' }: ScreenProps) {
   return (
-    <LinearGradient colors={gradientMap[variant]} style={styles.gradient}>
+    <LinearGradient colors={screenGradient[variant] as any} style={styles.gradient}>
       <SafeAreaView edges={edges} style={[styles.safe, style]}>
         <View style={styles.content}>{children}</View>
       </SafeAreaView>
@@ -37,6 +31,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: spacing.md + 4, // 20px to align with existing spacing
   },
 });

@@ -4,12 +4,14 @@ import { Feather } from '@expo/vector-icons';
 
 import { HomeScreen } from '../app/HomeScreen';
 import { HistoryScreen } from '../app/HistoryScreen';
+import { ResultsScreen } from '../app/ResultsScreen';
 import { SettingsScreen } from '../app/SettingsScreen';
 import { SafetyScreen } from '../app/SafetyScreen';
 import { BreathSessionScreen } from '../app/BreathSessionScreen';
 import { SessionSummaryScreen } from '../app/SessionSummaryScreen';
 import { ColdExposureScreen } from '../app/ColdExposureScreen';
 import { SessionDetailScreen } from '../app/SessionDetailScreen';
+import { GuidedBreathingScreen } from '../app/GuidedBreathingScreen';
 import { colors } from '../theme';
 import type { HistoryStackParamList, HomeStackParamList, RootTabParamList } from './types';
 
@@ -22,6 +24,7 @@ function HomeStackNavigator() {
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="Home" component={HomeScreen} />
       <HomeStack.Screen name="Safety" component={SafetyScreen} />
+      <HomeStack.Screen name="GuidedBreathing" component={GuidedBreathingScreen} />
       <HomeStack.Screen name="BreathSession" component={BreathSessionScreen} />
       <HomeStack.Screen name="SessionSummary" component={SessionSummaryScreen} />
       <HomeStack.Screen name="ColdExposure" component={ColdExposureScreen} />
@@ -32,7 +35,7 @@ function HomeStackNavigator() {
 function HistoryStackNavigator() {
   return (
     <HistoryStack.Navigator screenOptions={{ headerShown: false }}>
-      <HistoryStack.Screen name="History" component={HistoryScreen} />
+      <HistoryStack.Screen name="ResultsTab" component={ResultsScreen} />
       <HistoryStack.Screen name="SessionDetail" component={SessionDetailScreen} />
     </HistoryStack.Navigator>
   );
@@ -46,8 +49,8 @@ export function RootNavigator() {
         tabBarActiveTintColor: colors.deep,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: colors.sand,
-          borderTopColor: colors.stroke,
+          backgroundColor: colors.frost,
+          borderTopColor: colors.border,
           height: 68,
           paddingBottom: 10,
           paddingTop: 6,
@@ -60,9 +63,9 @@ export function RootNavigator() {
           const iconName =
             route.name === 'HomeTab'
               ? 'home'
-              : route.name === 'History'
-                ? 'clock'
-                : 'sliders';
+              : route.name === 'ResultsTab'
+                ? 'bar-chart-2'
+                : 'settings';
           return <Feather name={iconName} size={size} color={color} />;
         },
       })}
@@ -72,8 +75,16 @@ export function RootNavigator() {
         component={HomeStackNavigator}
         options={{ title: 'Home' }}
       />
-      <Tab.Screen name="History" component={HistoryStackNavigator} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen
+        name="ResultsTab"
+        component={HistoryStackNavigator}
+        options={{ title: 'Results' }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
+      />
     </Tab.Navigator>
   );
 }

@@ -1,6 +1,7 @@
 import { DefaultTheme, type Theme } from '@react-navigation/native';
 
 export const colors = {
+  // Base colors from original design
   night: '#102027',
   deep: '#0E3C4A',
   glacier: '#7BC6C9',
@@ -13,6 +14,18 @@ export const colors = {
   textMuted: '#42545C',
   stroke: '#D6E0E4',
   overlay: 'rgba(16, 32, 39, 0.08)',
+
+  // NEW: UI Refresh colors for airy, low-contrast aesthetic
+  seafoam: '#94D0C9',    // Soft teal-green for accents
+  teal: '#5BA8A0',       // Muted teal for secondary actions
+  frost: '#F5FAFA',     // Very light teal-tinted white
+  border: '#EDF2F2',    // Ultra-subtle border
+  borderSoft: '#F0F4F4', // Even softer border for subtle elements
+  badgeGold: '#F5D598',
+  badgeCoral: '#F49B7A',
+  badgeLime: '#B8E098',
+  badgePurple: '#C4A7E3',
+  badgeBlue: '#8FC7EB',
 };
 
 export const spacing = {
@@ -26,12 +39,22 @@ export const spacing = {
 
 export const radius = {
   sm: 12,
-  md: 18,
+  md: 20,  // Increased from 18
   lg: 28,
   xl: 36,
+  pill: 999, // NEW: Pill radius for buttons and controls
 };
 
 export const shadow = {
+  // NEW: Subtle shadow for airy feel - reduced opacity
+  subtle: {
+    shadowColor: '#0B1F27',
+    shadowOpacity: 0.04, // Reduced from 0.08
+    shadowRadius: 8,     // Reduced from 12
+    shadowOffset: { width: 0, height: 2 }, // Reduced from 6
+    elevation: 2,        // Reduced from 4
+  },
+  // Keep original for backward compatibility
   soft: {
     shadowColor: '#0B1F27',
     shadowOpacity: 0.08,
@@ -39,6 +62,14 @@ export const shadow = {
     shadowOffset: { width: 0, height: 6 },
     elevation: 4,
   },
+};
+
+// NEW: Screen gradient presets for airy looks
+export const screenGradient = {
+  default: ['#FFFFFF', '#F5FAFA'], // White to frost
+  mist: ['#F5FAFA', '#EDF2F2'],    // Frost to light border
+  deep: ['#1B3944', '#0E2D37'],    // Original dark for sessions
+  warm: ['#F6F2EA', '#E6F1F3'],    // Original warm tone for legacy
 };
 
 const baseTypography = {
@@ -104,6 +135,11 @@ export function getScaledTypography(fontScale: number) {
       fontSize: baseTypography.mono.fontSize * fontScale,
       lineHeight: baseTypography.mono.lineHeight * fontScale,
     },
+    timer: {
+      fontFamily: 'SpaceMono_400Regular',
+      fontSize: 48 * fontScale,
+      lineHeight: 54 * fontScale,
+    },
   };
 }
 
@@ -112,10 +148,10 @@ export const navigationTheme: Theme = {
   colors: {
     ...DefaultTheme.colors,
     primary: colors.deep,
-    background: colors.sand,
+    background: colors.frost,
     card: colors.cloud,
     text: colors.text,
-    border: colors.stroke,
+    border: colors.border,
     notification: colors.ember,
   },
 };
