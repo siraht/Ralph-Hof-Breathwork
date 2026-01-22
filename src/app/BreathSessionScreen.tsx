@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { activateKeepAwake, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Haptics from 'expo-haptics';
@@ -8,11 +8,8 @@ import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { ScaledText } from '../components/ScaledText';
-import { playCue } from '../logic/audioCue';
-import { buildBreathingTimeline, getBreathingSnapshot } from '../logic/breathingEngine';
-import { formatTimer } from '../logic/time';
-import { useBreathingStore } from '../state/breathingStore';
 import { useSettingsStore } from '../state/settingsStore';
+import { useBreathingStore, type SessionStartOptions } from '../state/breathingStore';
 import { colors, radius, spacing, typography } from '../theme';
 import type { HomeStackParamList } from '../navigation/types';
 
@@ -34,33 +31,42 @@ const phaseHints = {
 
 export function BreathSessionScreen({ navigation }: Props) {
   const defaults = useSettingsStore((state) => state.defaults);
+  const emptyHoldGoalSec = useSettingsStore((state) => state.emptyHoldGoalSec);
+  const recoveryHoldGoalSec = useSettingsStore((state) => state.recoveryHoldGoalSec);
+  const reducedMotionPreferred = useSettingsStore((state) => state.reducedMotionPreferred);
+
   const status = useBreathingStore((state) => state.status);
   const snapshot = useBreathingStore((state) => state.snapshot);
   const timeline = useBreathingStore((state) => state.timeline);
+  const isHoldPhase = useBreathingStore((state) => state.isHoldPhase);
+  const holdElapsedSec = useBreathingStore((state) => state.holdElapsedSec);
+  const goalReached = useBreathingStore((state) => state.goalReached);
   const startSession = useBreathingStore((state) => state.startSession);
   const pauseSession = useBreathingStore((state) => state.pauseSession);
   const resumeSession = useBreathingStore((state) => state.resumeSession);
   const stopSession = useBreathingStore((state) => state.stopSession);
   const resetSession = useBreathingStore((state) => state.reset);
+  const advanceFromHold = useBreathingStore((state) => state.advanceFromHold);
   const tick = useBreathingStore((state) => state.tick);
-  const audioEnabled = useSettingsStore((state) => state.audioEnabled);
-  const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
 
   const [sessionSafetyConfirmed, setSessionSafetyConfirmed] = useState(false);
   const lastCueKey = useRef<string | null>(null);
+  const lastGoalReachedState = useRef(false);
 
-  const previewTimeline = useMemo(() => buildBreathingTimeline(defaults), [defaults]);
-  const activeTimeline = timeline ?? previewTimeline;
-  const activeSnapshot = snapshot ?? getBreathingSnapshot(activeTimeline, 0);
+  const activeTimeline = timeline;
+  const activeSnapshot = snapshot;
+
+  // Animated circle for breathing cadence
+  const circleScale = useRef(new Animated.Value(1)).current;
+  const circleOpacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    if (status !== 'running') {
-      return;
+    if (status === 'running' && activeSnapshot) {
+      tick(Date.now());
+      const id = setInterval(() => tick(Date.now()), 250);
+      return () => clearInterval(id);
     }
-    tick(Date.now());
-    const id = setInterval(() => tick(Date.now()), 250);
-    return () => clearInterval(id);
-  }, [status, tick]);
+  }, [status, tick, activeSnapshot]);
 
   useEffect(() => {
     if (status === 'running') {
@@ -75,26 +81,53 @@ export function BreathSessionScreen({ navigation }: Props) {
   useEffect(() => {
     if (status === 'idle') {
       lastCueKey.current = null;
+      lastGoalReachedState.current = false;
     }
   }, [status]);
 
   useEffect(() => {
-    if (status !== 'running' || !snapshot || snapshot.isComplete) {
+    if (status !== 'running' || !activeSnapshot || activeSnapshot.isComplete) {
       return;
     }
-    const segment = snapshot.segment;
+
+    // Phase change haptic/audio cue
+    const segment = activeSnapshot.segment;
     const cueKey = `${segment.type}-${segment.roundIndex}-${segment.breathIndex ?? 0}`;
-    if (cueKey === lastCueKey.current) {
-      return;
-    }
-    lastCueKey.current = cueKey;
-    if (hapticsEnabled) {
+    if (cueKey !== lastCueKey.current) {
+      lastCueKey.current = cueKey;
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    if (audioEnabled) {
-      void playCue();
+
+    // Goal reached haptic
+    if (goalReached && !lastGoalReachedState.current) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      lastGoalReachedState.current = true;
+    } else if (!goalReached) {
+      lastGoalReachedState.current = false;
     }
-  }, [audioEnabled, hapticsEnabled, snapshot, status]);
+
+    // Animate circle for breathing phases
+    const segmentType = activeSnapshot.segment.type;
+    const isInhale = segmentType === 'inhale';
+    const isExhale = segmentType === 'exhale';
+
+    if (!reducedMotionPreferred && (isInhale || isExhale)) {
+      const duration = (segmentType === 'inhale' ? activeSnapshot.segmentRemainingSec : activeSnapshot.segmentElapsedSec) * 1000;
+      const targetScale = isInhale ? 1.3 : 0.7;
+      const targetOpacity = isInhale ? 0.6 : 0.3;
+
+      Animated.timing(circleScale, {
+        toValue: targetScale,
+        duration: Math.max(100, duration),
+        useNativeDriver: true,
+      }).start();
+      Animated.timing(circleOpacity, {
+        toValue: targetOpacity,
+        duration: Math.max(100, duration),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [status, activeSnapshot, goalReached, reducedMotionPreferred, circleScale, circleOpacity]);
 
   useEffect(() => {
     if (status === 'idle') {
@@ -103,7 +136,12 @@ export function BreathSessionScreen({ navigation }: Props) {
   }, [status]);
 
   const handleStart = () => {
-    startSession(defaults);
+    const options: SessionStartOptions = {
+      ...defaults,
+      emptyHoldGoalSec,
+      recoveryHoldGoalSec,
+    };
+    startSession(options);
   };
 
   const handleFinishEarly = () => {
@@ -119,40 +157,139 @@ export function BreathSessionScreen({ navigation }: Props) {
     resetSession();
   };
 
-  const phaseLabel = phaseLabels[activeSnapshot.segment.type];
-  const breathLabel = activeSnapshot.breathIndex
-    ? `Breath ${activeSnapshot.breathIndex} of ${activeSnapshot.totalBreaths}`
-    : activeSnapshot.segment.type === 'hold'
-      ? 'Hold on empty lungs'
-      : 'Recovery breath';
-  const nextLabel = activeSnapshot.nextSegment ? phaseLabels[activeSnapshot.nextSegment.type] : 'Complete';
-  const nextHint = activeSnapshot.nextSegment ? phaseHints[activeSnapshot.nextSegment.type] : 'Session complete.';
-  const timerValue =
-    status === 'idle'
-      ? formatTimer(activeTimeline.totalDurationSec)
-      : formatTimer(activeSnapshot.segmentRemainingSec);
+  const handleContinue = () => {
+    advanceFromHold();
+  };
 
-  const totalRemaining = Math.max(0, activeTimeline.totalDurationSec - activeSnapshot.elapsedSec);
-  const totalRemainingLabel = formatTimer(totalRemaining);
+  // Format time display based on phase type
+  const getTimerDisplay = () => {
+    if (!activeSnapshot || status === 'idle') {
+      return activeTimeline ? formatTimer(activeTimeline.totalDurationSec) : '0:00';
+    }
+
+    const segmentType = activeSnapshot.segment.type;
+
+    if (segmentType === 'hold' || segmentType === 'recovery') {
+      // Stopwatch mode: show elapsed time
+      const elapsed = Math.round(holdElapsedSec);
+      return formatTimer(elapsed);
+    }
+
+    // Breathing phases: show remaining time for current breath
+    return formatTimer(activeSnapshot.segmentRemainingSec);
+  };
+
+  // Determine breath label - simplified version
+  const getBreathLabel = () => {
+    if (!activeSnapshot) return '';
+
+    const segmentType = activeSnapshot.segment.type;
+
+    if (segmentType === 'hold') {
+      return 'Hold on empty lungs';
+    }
+
+    if (segmentType === 'recovery') {
+      return 'Recovery breath';
+    }
+
+    // During breathing, show breath count with remaining phase time
+    if (activeSnapshot.breathIndex) {
+      const remainingPhase = Math.ceil(activeSnapshot.segmentRemainingSec);
+      const verb = segmentType === 'inhale' ? 'Inhale' : 'Exhale';
+      return `${verb} · ${remainingPhase}s`;
+    }
+
+    return '';
+  };
+
+  // Fixed "next up" label - don't flip during breathing
+  const getNextLabel = () => {
+    if (!activeSnapshot) return 'Complete';
+
+    const segmentType = activeSnapshot.segment.type;
+
+    // During breathing, always point to hold
+    if (segmentType === 'inhale' || segmentType === 'exhale') {
+      return 'Hold on empty lungs';
+    }
+
+    return 'Complete';
+  };
+
+  const formatTimer = (seconds: number): string => {
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const phaseLabel = activeSnapshot ? phaseLabels[activeSnapshot.segment.type] : 'Breathwork';
+  const isInhale = activeSnapshot?.segment.type === 'inhale';
+  const isExhale = activeSnapshot?.segment.type === 'exhale';
+  const isHold = activeSnapshot?.segment.type === 'hold' || activeSnapshot?.segment.type === 'recovery';
+  const isBreathing = isInhale || isExhale;
+
+  // Update preview timer when idle - calculate based on hold goals
+  const previewSeconds = useMemo(() => {
+    if (!activeTimeline) return 0;
+    return activeTimeline.totalDurationSec;
+  }, [activeTimeline]);
 
   return (
     <Screen variant="deep" style={styles.container}>
       <Text style={styles.title}>Breathwork</Text>
       <Text style={styles.subtitle}>Follow the cadence. Let your breath stay soft and circular.</Text>
 
-      <View style={styles.timerWrap}>
-        <ScaledText variant="caption" style={styles.round}>{`Round ${activeSnapshot.roundIndex} of ${activeTimeline.totalRounds}`}</ScaledText>
-        <ScaledText variant="timer" style={styles.timer}>{timerValue}</ScaledText>
-        <ScaledText variant="title" style={styles.phase}>{phaseLabel}</ScaledText>
-        <ScaledText variant="body" style={styles.breath}>{breathLabel}</ScaledText>
-        <ScaledText variant="caption" style={styles.total}>{`Total remaining ${totalRemainingLabel}`}</ScaledText>
+      {/* Animated Breathing Circle */}
+      <View style={styles.circleContainer}>
+        <Animated.View
+          style={[
+            styles.breathCircle,
+            {
+              transform: [{ scale: reducedMotionPreferred ? 1 : circleScale }],
+              opacity: reducedMotionPreferred ? 0.3 : circleOpacity,
+              backgroundColor: isHold ? colors.teal : colors.seafoam,
+            },
+          ]}
+        />
+        {isHold && goalReached && <View style={styles.goalRing} />}
       </View>
 
-      <Card style={styles.phaseCard} tone="light">
-        <Text style={styles.phaseTitle}>Next up</Text>
-        <Text style={styles.phaseCopy}>{`${nextLabel} · ${nextHint}`}</Text>
-      </Card>
+      {/* Timer Display */}
+      <View style={styles.timerWrap}>
+        {activeTimeline && (
+          <ScaledText variant="caption" style={styles.round}>{`Round ${activeSnapshot?.roundIndex ?? 1} of ${activeTimeline.totalRounds}`}</ScaledText>
+        )}
+        <ScaledText variant="timer" style={[styles.timer, isHold && goalReached && styles.timerGoalReached]}>
+          {getTimerDisplay()}
+        </ScaledText>
+        <ScaledText variant="title" style={styles.phase}>{phaseLabel}</ScaledText>
+        <ScaledText variant="body" style={styles.breath}>{getBreathLabel()}</ScaledText>
+        {activeTimeline && status !== 'idle' && (
+          <ScaledText variant="caption" style={styles.next}>
+            {isBreathing ? `Next: ${getNextLabel()}` : ''}
+          </ScaledText>
+        )}
+      </View>
 
+      {/* Hold Phase Info */}
+      {isHold && activeSnapshot && (
+        <Card style={[styles.phaseCard, styles.holdCard]} tone="light">
+          <Text style={styles.phaseTitle}>Phase info</Text>
+          <Text style={styles.phaseCopy}>
+            {activeSnapshot.segment.type === 'hold'
+              ? `Hold on empty lungs. Goal: ${activeSnapshot.segment.holdGoalSec ?? emptyHoldGoalSec}s`
+              : `Recovery breath. Goal: ${activeSnapshot.segment.holdGoalSec ?? recoveryHoldGoalSec}s`
+            }
+          </Text>
+          {goalReached && (
+            <Text style={styles.goalReached}>✓ Goal reached!</Text>
+          )}
+        </Card>
+      )}
+
+      {/* Safety Card (idle only) */}
       {status === 'idle' ? (
         <Card style={styles.safetyCard} tone="mist">
           <Text style={styles.safetyTitle}>Safety reminder</Text>
@@ -164,28 +301,42 @@ export function BreathSessionScreen({ navigation }: Props) {
         </Card>
       ) : null}
 
+      {/* Action Buttons */}
       <View style={styles.actions}>
         {status === 'idle' ? (
-          <Button label="Start session" onPress={handleStart} disabled={!sessionSafetyConfirmed} style={styles.primaryButton} />
+          <Button
+            label="Start session"
+            onPress={handleStart}
+            disabled={!sessionSafetyConfirmed}
+            style={styles.primaryButton}
+          />
         ) : null}
+
         {status === 'running' ? (
           <>
-            <Button label="Pause" onPress={pauseSession} style={styles.primaryButton} />
+            {isHold && goalReached ? (
+              <Button label="Continue" onPress={handleContinue} style={styles.primaryButton} variant="secondary" />
+            ) : (
+              <Button label="Pause" onPress={pauseSession} style={styles.primaryButton} />
+            )}
             <Button label="Finish early" onPress={handleFinishEarly} variant="ghost" style={styles.ghostButton} />
           </>
         ) : null}
+
         {status === 'paused' ? (
           <>
             <Button label="Resume" onPress={resumeSession} style={styles.primaryButton} />
             <Button label="Finish early" onPress={handleFinishEarly} variant="ghost" style={styles.ghostButton} />
           </>
         ) : null}
+
         {status === 'completed' ? (
           <>
             <Button label="View summary" onPress={handleViewSummary} style={styles.primaryButton} />
             <Button label="Start again" onPress={handleRestart} variant="ghost" style={styles.ghostButton} />
           </>
         ) : null}
+
         {status === 'idle' ? (
           <Button
             label="Back home"
@@ -212,6 +363,25 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
     marginTop: spacing.sm,
   },
+  circleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 200,
+    marginVertical: spacing.lg,
+  },
+  breathCircle: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+  },
+  goalRing: {
+    position: 'absolute',
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    borderWidth: 3,
+    borderColor: colors.teal,
+  },
   timerWrap: {
     marginTop: spacing.xl,
     borderRadius: radius.xl,
@@ -219,6 +389,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
     padding: spacing.xl,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
   },
   round: {
     ...typography.caption,
@@ -243,7 +414,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
     marginTop: spacing.xs,
   },
-  total: {
+  next: {
     ...typography.caption,
     color: 'rgba(255, 255, 255, 0.6)',
     marginTop: spacing.sm,
@@ -251,6 +422,10 @@ const styles = StyleSheet.create({
   phaseCard: {
     marginTop: spacing.lg,
     borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  holdCard: {
+    backgroundColor: 'rgba(20, 184, 166, 0.1)',
+    borderColor: colors.seafoam,
   },
   phaseTitle: {
     ...typography.title,
@@ -260,6 +435,15 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textMuted,
     marginTop: spacing.xs,
+  },
+  goalReached: {
+    ...typography.body,
+    color: colors.teal,
+    marginTop: spacing.sm,
+    fontWeight: '600',
+  },
+  timerGoalReached: {
+    color: colors.seafoam,
   },
   safetyCard: {
     marginTop: spacing.lg,

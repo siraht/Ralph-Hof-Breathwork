@@ -197,3 +197,131 @@ Below is the TODO list with dependency overlays. Each task includes reasoning, k
 - SessionDetail navigation preserved for viewing historical session data
 - When replacing History with Results, SessionDetail is still accessible from Results screen
 - Keep all platform-specific behavior for storage intact; UI changes do not affect persistence logic
+
+---
+
+## Breathwork Cadence + Stopwatch Holds Upgrade (New Work)
+
+### Context + Intent
+- Goal: overhaul the in-session breathing UI/logic so the user can visually sync breathing, adjust pace, and treat holds as goal-based stopwatches rather than fixed timers.
+- Why: the current UI is timer-first and flips labels per inhale/exhale, which is noisy and less intuitive. The requested experience prioritizes a calm visual rhythm, breath count, and flexible hold tracking.
+- Scope: `BreathSessionScreen` UI, breathing engine timing logic, settings/configuration for pace and hold goals, and QA/diagnostics for Results/Stats using t-browser.
+- Non-goals: do not remove safety checks or change storage architecture; no backend work.
+
+### Behavioral Requirements (Restated)
+- Animated circle expands/contracts to cue inhale/exhale.
+- Inhale/exhale pace is user-configurable (faster/slower for initial breaths).
+- During initial breaths, "Next up" should stay on "Hold empty lungs" (no switching between inhale/exhale labels).
+- Breathing phase UI does not show per-breath timer; show breath count + remaining phase time.
+- Hold phases (empty lungs, then recovery breath in) are stopwatches:
+  - User sets a goal time.
+  - Stopwatch counts up.
+  - App indicates when goal is reached but allows continuing beyond it.
+- Both hold phases allow going past the goal; actual elapsed time should be recorded for stats.
+- Results/Stats seem broken; we must plan a t-browser devserver inspection and fix.
+
+### Task Structure and Dependencies
+
+#### 0) Baseline Audit + Acceptance Criteria [DONE - 2026-01-22]
+- Purpose: align on current engine behavior and define what "done" looks like.
+- Depends on: none.
+- Files to inspect: `src/logic/breathingEngine.ts`, `src/state/breathingStore.ts`, `src/app/BreathSessionScreen.tsx`, `src/state/settingsStore.ts`.
+- Completed: 2026-01-22
+- Decisions:
+  - Documented current breath segment structure and timers (hold durations are fixed)
+  - Holds currently use countdown approach, need stopwatch with goal tracking
+  - Acceptance criteria defined: animated circle, simplified labels, stopwatch holds with continue beyond goal
+
+#### 1) Add Settings for Pace + Hold Goals [DONE - 2026-01-22]
+- Purpose: enable user control over inhale/exhale pace and hold goal targets.
+- Depends on: Task 0.
+- Files: `src/state/settingsStore.ts`, `src/storage/settingsStorage.ts`, `src/logic/breathingConfig.ts`.
+- Completed: 2026-01-22
+- Changes:
+  - Added `BreathingPace` type with 'slow' | 'standard' | 'fast' presets
+  - Added `breathingPacePresets` with inhaleSec/exhaleSec values
+  - Added `emptyHoldGoalSec` and `recoveryHoldGoalSec` settings fields
+  - Updated settings version key from v1 to v2 for migration
+  - Added `updateBreathingPace()`, `updateEmptyHoldGoal()`, `updateRecoveryHoldGoal()` methods
+
+#### 2) Breathing Engine: Variable Pace + Stopwatch Holds [DONE - 2026-01-22]
+- Purpose: update the timeline to support per-breath pacing and count-up holds.
+- Depends on: Task 1.
+- Files: `src/logic/breathingEngine.ts`, `src/state/breathingStore.ts`.
+- Completed: 2026-01-22
+- Changes:
+  - Updated `BreathingTimeline` to include `emptyHoldGoalSec` and `recoveryHoldGoalSec`
+  - Added `holdGoalSec` field to `BreathSegment` for hold and recovery segments
+  - Added options parameter to `buildBreathingTimeline()` for hold goals
+  - Updated `BreathingStats` to track both hold and recovery segments as hold time
+  - Added hold tracking state to breathingStore:
+    - `holdPhaseStartElapsedSec`: tracks when hold phase began
+    - `holdElapsedSec`: current elapsed time in hold
+    - `goalReached`: boolean for goal met
+    - `isHoldPhase`: boolean for current phase type
+  - Added `advanceFromHold()` method for manual hold advancement
+  - Added `SessionStartOptions` type extending `BreathConfig` with hold goals
+
+#### 3) Breathing Session UI: Animated Circle + Simplified Labels [DONE - 2026-01-22]
+- Purpose: align UI with the requested visual breathing guidance.
+- Depends on: Task 2.
+- Files: `src/app/BreathSessionScreen.tsx`.
+- Completed: 2026-01-22
+- Changes:
+  - Added animated circle using React Native Animated API
+    - Expands to 1.3x scale on inhale, contracts to 0.7x on exhale
+    - Color changes: seafoam for breathing, teal for hold phases
+    - Opacity pulses with breathing cadence
+    - Respects reduced motion setting
+  - Simplified breathing phase UI:
+    - Shows "Inhale · 2s" or "Exhale · 2s" format with remaining time
+    - No per-breath countdown or timer noise
+    - "Next up" stays on "Hold on empty lungs" during breathing
+  - Hold phase stopwatch UI:
+    - Shows elapsed time counting up
+    - Displays goal time in Phase info card
+    - "✓ Goal reached!" indicator with color change
+    - Goal ring appears around circle when goal met
+  - Goal reached haptic feedback using Haptics.notificationAsync
+
+#### 4) Hold Phase Controls: Continue Beyond Goal [DONE - 2026-01-22]
+- Purpose: allow user to exceed goal while still receiving an acknowledgement.
+- Depends on: Task 2 + Task 3.
+- Files: `src/app/BreathSessionScreen.tsx`, `src/state/breathingStore.ts`.
+- Completed: 2026-01-22
+- Changes:
+  - "Continue" button appears when in hold phase and goal reached
+  - Button replaces "Pause" during hold post-goal
+  - Manual advancement via `advanceFromHold()` method in store
+  - Stopwatch continues counting after goal is reached
+  - `stopSession()` correctly records actual elapsed hold time in stats
+  - Safety reminder and "Finish early" flow preserved
+- Files also updated: `src/app/GuidedBreathingScreen.tsx` to pass hold goal options to `startSession()`
+
+#### 5) Results/Stats Debugging Plan (t-browser + Dev Server)
+- Purpose: troubleshoot and fix reported broken Results/Stats UI.
+- Depends on: Task 0 (baseline) and prior UI refresh work already merged.
+- Tools: t-browser skill (agent-browser + diagnostics).
+- Subtasks:
+  - Run dev server (`npm run web` or `expo start --web`) and capture URL.
+  - Install agent-browser if needed: `bash scripts/install_agent_browser.sh`.
+  - Open app and snapshot:
+    - `agent-browser --session t-browser open <dev-url>`
+    - `agent-browser --session t-browser snapshot -i --json`
+  - Collect diagnostics:
+    - `node scripts/tbrowser.mjs errors`
+    - `node scripts/tbrowser.mjs network`
+  - Record observed issues (missing data, layout errors, exceptions).
+  - Trace source in `ResultsScreen`, session stats selectors, or data mapping.
+  - Fix and re-verify via snapshot + diagnostic commands.
+- Considerations:
+  - Use `TBROWSER_SESSION=t-browser` and `TBROWSER_PROFILE=wimhof` to keep state.
+  - Document root cause + fix in this file after resolution.
+  
+#### 5) Results/Stats Debugging Plan (t-browser + Dev Server)
+- Run through every single UI interaction in the app; every screen, every action, etc. take note of everything broken, and fix every single one.
+
+### Notes for Future Agents
+- The breathing UI should feel calm and meditative; avoid rapid text changes or noisy timers.
+- "Goal time" is a milestone, not an ending. Hold phases must remain user-controlled.
+- Ensure haptics/audio cues align with new phase transitions (in/out/begin hold/goal reached).

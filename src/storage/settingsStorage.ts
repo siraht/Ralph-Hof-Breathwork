@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { breathDefaults, type BreathConfig } from '../logic/breathingConfig';
+import { breathingPacePresets, breathDefaults, type BreathConfig, type BreathingPace } from '../logic/breathingConfig';
 
-const SETTINGS_KEY = 'wimhof.settings.v1';
+const SETTINGS_KEY = 'wimhof.settings.v2';
 
 export type StoredSettings = {
   defaults: Required<BreathConfig>;
@@ -10,6 +10,9 @@ export type StoredSettings = {
   hapticsEnabled: boolean;
   safetyAcknowledgedAt: string | null;
   reducedMotionPreferred: boolean;
+  breathingPace: BreathingPace;
+  emptyHoldGoalSec: number;
+  recoveryHoldGoalSec: number;
 };
 
 export const defaultSettings: StoredSettings = {
@@ -18,6 +21,9 @@ export const defaultSettings: StoredSettings = {
   hapticsEnabled: true,
   safetyAcknowledgedAt: null,
   reducedMotionPreferred: false,
+  breathingPace: 'standard',
+  emptyHoldGoalSec: 60,
+  recoveryHoldGoalSec: 15,
 };
 
 export async function loadSettings(): Promise<StoredSettings> {

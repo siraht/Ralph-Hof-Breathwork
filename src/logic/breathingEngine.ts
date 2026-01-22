@@ -7,6 +7,8 @@ export type BreathSegment = {
   durationSec: number;
   roundIndex: number;
   breathIndex?: number;
+  // For hold segments: the goal time in seconds
+  holdGoalSec?: number;
 };
 
 export type BreathingTimeline = {
@@ -14,6 +16,8 @@ export type BreathingTimeline = {
   totalDurationSec: number;
   totalRounds: number;
   breathsPerRound: number;
+  emptyHoldGoalSec: number;
+  recoveryHoldGoalSec: number;
 };
 
 export type BreathingSnapshot = {
@@ -36,9 +40,14 @@ export type BreathingStats = {
   longestHoldSec: number;
 };
 
-export function buildBreathingTimeline(config: BreathConfig): BreathingTimeline {
+export function buildBreathingTimeline(
+  config: BreathConfig,
+  options?: { emptyHoldGoalSec?: number; recoveryHoldGoalSec?: number },
+): BreathingTimeline {
   const inhaleSec = config.inhaleSec ?? breathDefaults.inhaleSec;
   const exhaleSec = config.exhaleSec ?? breathDefaults.exhaleSec;
+  const emptyHoldGoalSec = options?.emptyHoldGoalSec ?? config.holdSec ?? 60;
+  const recoveryHoldGoalSec = options?.recoveryHoldGoalSec ?? config.recoverySec ?? 15;
   const segments: BreathSegment[] = [];
   let totalDurationSec = 0;
 
@@ -47,8 +56,20 @@ export function buildBreathingTimeline(config: BreathConfig): BreathingTimeline 
       segments.push({ type: 'inhale', durationSec: inhaleSec, roundIndex: round, breathIndex: breath });
       segments.push({ type: 'exhale', durationSec: exhaleSec, roundIndex: round, breathIndex: breath });
     }
-    segments.push({ type: 'hold', durationSec: config.holdSec, roundIndex: round });
-    segments.push({ type: 'recovery', durationSec: config.recoverySec, roundIndex: round });
+    // Hold after breaths: use goal time as duration
+    segments.push({
+      type: 'hold',
+      durationSec: emptyHoldGoalSec,
+      roundIndex: round,
+      holdGoalSec: emptyHoldGoalSec,
+    });
+    // Recovery breath
+    segments.push({
+      type: 'recovery',
+      durationSec: recoveryHoldGoalSec,
+      roundIndex: round,
+      holdGoalSec: recoveryHoldGoalSec,
+    });
   }
 
   totalDurationSec = segments.reduce((sum, segment) => sum + segment.durationSec, 0);
@@ -58,6 +79,8 @@ export function buildBreathingTimeline(config: BreathConfig): BreathingTimeline 
     totalDurationSec,
     totalRounds: config.rounds,
     breathsPerRound: config.breaths,
+    emptyHoldGoalSec,
+    recoveryHoldGoalSec,
   };
 }
 
@@ -114,7 +137,7 @@ export function getBreathingStats(timeline: BreathingTimeline, elapsedMs: number
     const segment = timeline.segments[index];
     const timeInSegment = Math.min(remaining, segment.durationSec);
 
-    if (segment.type === 'hold') {
+    if (segment.type === 'hold' || segment.type === 'recovery') {
       longestHoldSec = Math.max(longestHoldSec, timeInSegment);
     }
 

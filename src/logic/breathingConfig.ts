@@ -7,6 +7,31 @@ export type BreathConfig = {
   exhaleSec?: number;
 };
 
+export type BreathingPace = 'slow' | 'standard' | 'fast';
+
+export interface BreathingPaceConfig {
+  inhaleSec: number;
+  exhaleSec: number;
+}
+
+export const breathingPacePresets: Record<BreathingPace, BreathingPaceConfig> = {
+  slow: { inhaleSec: 3, exhaleSec: 3 },
+  standard: { inhaleSec: 2, exhaleSec: 2 },
+  fast: { inhaleSec: 1.5, exhaleSec: 1.5 },
+};
+
+export function getPaceConfig(pace: BreathingPace): Required<BreathConfig> {
+  const paceConfig = breathingPacePresets[pace];
+  return {
+    rounds: breathDefaults.rounds,
+    breaths: breathDefaults.breaths,
+    holdSec: breathDefaults.holdSec,
+    recoverySec: breathDefaults.recoverySec,
+    inhaleSec: paceConfig.inhaleSec,
+    exhaleSec: paceConfig.exhaleSec,
+  };
+}
+
 type Limit = { min: number; max: number };
 
 export const breathLimits: Record<keyof Omit<BreathConfig, 'inhaleSec' | 'exhaleSec'>, Limit> & {

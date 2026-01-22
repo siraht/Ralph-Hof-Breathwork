@@ -12,7 +12,8 @@ import { Screen } from '../components/Screen';
 import { BadgeTile } from '../components/BadgeTile';
 import { colors, radius, spacing, typography } from '../theme';
 import { breathDefaults, type BreathConfig } from '../logic/breathingConfig';
-import { useBreathingStore } from '../state/breathingStore';
+import { useBreathingStore, type SessionStartOptions } from '../state/breathingStore';
+import { useSettingsStore } from '../state/settingsStore';
 import type { HomeStackParamList } from '../navigation/types';
 
 type BreathingSpeed = 'slow' | 'standard' | 'fast';
@@ -47,13 +48,15 @@ export function GuidedBreathingScreen() {
 
   const handleStartSession = () => {
     const speedConfig = SPEED_CONFIGS[speed];
-    const newConfig: BreathConfig = {
+    const newConfig: SessionStartOptions = {
       rounds: breathDefaults.rounds,
       breaths: breathsBeforeRetention,
       holdSec: holdTime,
       recoverySec: breathDefaults.recoverySec,
       inhaleSec: speedConfig.inhale,
       exhaleSec: speedConfig.exhale,
+      emptyHoldGoalSec: holdTime,
+      recoveryHoldGoalSec: breathDefaults.recoverySec,
     };
     startSession(newConfig);
     navigation.navigate('BreathSession');

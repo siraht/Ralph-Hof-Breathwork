@@ -1,12 +1,28 @@
 import { create } from 'zustand';
 
-import { breathLimits, breathDefaults, clampValue, type BreathConfig } from '../logic/breathingConfig';
+import {
+  breathingPacePresets,
+  breathLimits,
+  breathDefaults,
+  clampValue,
+  getPaceConfig,
+  type BreathConfig,
+  type BreathingPace,
+} from '../logic/breathingConfig';
 import { defaultSettings, loadSettings, saveSettings, type StoredSettings } from '../storage/settingsStorage';
+
+const holdGoalLimits = {
+  emptyHold: { min: 0, max: 180 },
+  recoveryHold: { min: 5, max: 30 },
+};
 
 type SettingsState = StoredSettings & {
   loaded: boolean;
   load: () => Promise<void>;
   updateDefaults: (next: Partial<BreathConfig>) => void;
+  updateBreathingPace: (pace: BreathingPace) => void;
+  updateEmptyHoldGoal: (seconds: number) => void;
+  updateRecoveryHoldGoal: (seconds: number) => void;
   toggleAudio: () => void;
   toggleHaptics: () => void;
   acknowledgeSafety: () => void;
@@ -31,6 +47,9 @@ function toStoredSettings(state: SettingsState): StoredSettings {
     hapticsEnabled: state.hapticsEnabled,
     safetyAcknowledgedAt: state.safetyAcknowledgedAt,
     reducedMotionPreferred: state.reducedMotionPreferred,
+    breathingPace: state.breathingPace,
+    emptyHoldGoalSec: state.emptyHoldGoalSec,
+    recoveryHoldGoalSec: state.recoveryHoldGoalSec,
   };
 }
 
@@ -46,6 +65,41 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const updated: StoredSettings = {
       ...toStoredSettings(current),
       defaults: clampDefaults({ ...current.defaults, ...next }),
+    };
+    set(updated);
+    void saveSettings(updated);
+  },
+  updateBreathingPace: (pace) => {
+    const current = get();
+    const paceConfig = breathingPacePresets[pace];
+    const updated: StoredSettings = {
+      ...toStoredSettings(current),
+      breathingPace: pace,
+      defaults: {
+        ...current.defaults,
+        inhaleSec: paceConfig.inhaleSec,
+        exhaleSec: paceConfig.exhaleSec,
+      },
+    };
+    set(updated);
+    void saveSettings(updated);
+  },
+  updateEmptyHoldGoal: (seconds) => {
+    const current = get();
+    const clamped = clampValue(seconds, holdGoalLimits.emptyHold);
+    const updated: StoredSettings = {
+      ...toStoredSettings(current),
+      emptyHoldGoalSec: clamped,
+    };
+    set(updated);
+    void saveSettings(updated);
+  },
+  updateRecoveryHoldGoal: (seconds) => {
+    const current = get();
+    const clamped = clampValue(seconds, holdGoalLimits.recoveryHold);
+    const updated: StoredSettings = {
+      ...toStoredSettings(current),
+      recoveryHoldGoalSec: clamped,
     };
     set(updated);
     void saveSettings(updated);
