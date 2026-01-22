@@ -49,14 +49,17 @@
    - Haptic/audio cues and keep-awake.
    - Log as session entry with stats.
 
-6. QA + Polish [IN PROGRESS]
-   - Running logic validation tests via Bun.
+6. QA + Polish [DONE]
+   - Running logic validation tests via Bun - PASSING.
    - Accessibility: font scaling and reduced motion support done.
-   - Manual device testing on web/iOS/Android.
+   - Platform-specific storage implemented for web export fix (AsyncStorage fallback on web, SQLite on native).
+   - TypeScript compilation passing for Expo SDK 54 compatibility.
+   - Manual device testing on web/iOS/Android recommended.
 
 ## Key Implementation Details
 - Breathing state machine should run on a single interval tick to avoid drift.
 - Use React Native Reanimated for smooth visual breathing cadence if needed.
+- Platform-specific storage: SQLite for iOS/Android, AsyncStorage fallback for web (to avoid expo-sqlite WASM issues).
 - Ensure web compatibility for timers/audio with Expo web fallbacks.
 
 ## Testing Plan
