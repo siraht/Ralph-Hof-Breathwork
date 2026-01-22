@@ -16,6 +16,24 @@
 - 2026-01-21: Fixed TypeScript compilation errors for Expo SDK 54 compatibility: updated expo-sqlite to use openDatabaseSync/runAsync APIs, fixed useEffect cleanup functions, added ViewStyle array support to Card, and renamed useAccessibility.ts to .tsx for JSX.
 - 2026-01-21: Implemented platform-specific storage to fix web export issues: created storageAdapter.ts for web AsyncStorage fallback and sqliteStorage.ts for native SQLite, with dynamic imports in sessionStorage.ts to load the appropriate implementation per platform.
 - 2026-01-22: Verified all QA items - logic tests pass, TypeScript compiles, web export succeeds. All milestones complete.
+- 2026-01-22: Completed UI Refresh Plan (all 7 tasks) to align app with reference screenshots.
+
+## UI Refresh Plan (2026-01-22 - COMPLETE)
+The UI Refresh Plan was implemented to match an airy, low-contrast aesthetic with soft teal accents based on reference screenshots.
+
+Key changes:
+- **New components created**: SegmentedTabs, BadgeTile, ResultsScreen, GuidedBreathingScreen
+- **Theme enhancements**: Added seafoam, teal, frost, border, borderSoft colors; pill radius token; subtle shadow variant; screenGradient presets
+- **Navigation updates**: History tab renamed to ResultsTab, pointing to new ResultsScreen; added GuidedBreathing route
+- **Dependencies**: Added react-native-svg for BadgeTile hex icon rendering
+
+Screens affected:
+- History tab → Results tab (new ResultsScreen with Bar Chart/Calendar/Badges tabs)
+- Original HistoryScreen remains for legacy session detail access
+- New GuidedBreathingScreen added for session configuration before BreathSessionScreen
+- SessionSummaryScreen navigation updated to navigate to 'ResultsTab' instead of 'History'
+
+The UI refresh focused on visual improvements only - all underlying data models, storage, breathing engine, and core functionality remain unchanged.
 
 ## Needed Manual Human Interventions
-- Device testing on web, iOS, and Android to verify all flows work correctly with the expo-sqlite v14+ API changes and platform-specific storage abstraction.
+- Device testing on web, iOS, and Android to verify all flows work correctly with the expo-sqlite v14+ API changes, platform-specific storage abstraction, and new UI components.
