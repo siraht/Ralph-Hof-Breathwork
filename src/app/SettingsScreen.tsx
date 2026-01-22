@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
+import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
-import { breathLimits, type BreathConfig } from '../logic/breathingConfig';
+import { SegmentedTabs, type TabOption } from '../components/SegmentedTabs';
+import { breathLimits, breathingPacePresets, type BreathConfig, type BreathingPace } from '../logic/breathingConfig';
 import { useSettingsStore } from '../state/settingsStore';
 import { colors, spacing, typography } from '../theme';
 
@@ -12,10 +14,26 @@ export function SettingsScreen() {
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
   const reducedMotionPreferred = useSettingsStore((state) => state.reducedMotionPreferred);
   const defaults = useSettingsStore((state) => state.defaults);
+  const breathingPace = useSettingsStore((state) => state.breathingPace);
+  const emptyHoldGoalSec = useSettingsStore((state) => state.emptyHoldGoalSec);
+  const recoveryHoldGoalSec = useSettingsStore((state) => state.recoveryHoldGoalSec);
   const toggleAudio = useSettingsStore((state) => state.toggleAudio);
   const toggleHaptics = useSettingsStore((state) => state.toggleHaptics);
   const toggleReducedMotion = useSettingsStore((state) => state.toggleReducedMotion);
   const updateDefaults = useSettingsStore((state) => state.updateDefaults);
+  const updateBreathingPace = useSettingsStore((state) => state.updateBreathingPace);
+  const updateEmptyHoldGoal = useSettingsStore((state) => state.updateEmptyHoldGoal);
+  const updateRecoveryHoldGoal = useSettingsStore((state) => state.updateRecoveryHoldGoal);
+
+  const paceOptions: TabOption[] = [
+    { label: 'Slow', value: 'slow' },
+    { label: 'Standard', value: 'standard' },
+    { label: 'Fast', value: 'fast' },
+  ];
+
+  const paceConfig = breathingPacePresets[breathingPace];
+  const emptyHoldGoalLimit = { min: 0, max: 180 };
+  const recoveryHoldGoalLimit = { min: 5, max: 30 };
 
   const steppers = useMemo(
     () => [
@@ -52,6 +70,20 @@ export function SettingsScreen() {
     updateDefaults({ [key]: current + delta } as Partial<BreathConfig>);
   };
 
+  const handlePaceChange = (value: string) => {
+    updateBreathingPace(value as BreathingPace);
+  };
+
+  const handleEmptyHoldGoalChange = (delta: number) => {
+    const newValue = Math.max(emptyHoldGoalLimit.min, Math.min(emptyHoldGoalLimit.max, emptyHoldGoalSec + delta));
+    updateEmptyHoldGoal(newValue);
+  };
+
+  const handleRecoveryHoldGoalChange = (delta: number) => {
+    const newValue = Math.max(recoveryHoldGoalLimit.min, Math.min(recoveryHoldGoalLimit.max, recoveryHoldGoalSec + delta));
+    updateRecoveryHoldGoal(newValue);
+  };
+
   return (
     <Screen>
       <Text style={styles.title}>Settings</Text>
@@ -84,6 +116,60 @@ export function SettingsScreen() {
             </View>
           );
         })}
+      </Card>
+
+      <Card style={styles.section}>
+        <Text style={styles.sectionTitle}>Breathing pace</Text>
+        <SegmentedTabs
+          options={paceOptions}
+          selectedValue={breathingPace}
+          onSelect={handlePaceChange}
+        />
+      </Card>
+
+      <Card style={styles.section}>
+        <Text style={styles.sectionTitle}>Hold goals (stopwatch)</Text>
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>Empty hold goal</Text>
+          <View style={styles.stepper}>
+            <Pressable
+              onPress={() => handleEmptyHoldGoalChange(-10)}
+              disabled={emptyHoldGoalSec <= emptyHoldGoalLimit.min}
+              style={({ pressed }) => [styles.stepperButton, pressed && styles.stepperPressed]}
+            >
+              <Text style={styles.stepperText}>-</Text>
+            </Pressable>
+            <Text style={styles.rowValue}>{emptyHoldGoalSec}s</Text>
+            <Pressable
+              onPress={() => handleEmptyHoldGoalChange(10)}
+              disabled={emptyHoldGoalSec >= emptyHoldGoalLimit.max}
+              style={({ pressed }) => [styles.stepperButton, pressed && styles.stepperPressed]}
+            >
+              <Text style={styles.stepperText}>+</Text>
+            </Pressable>
+          </View>
+        </View>
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>Recovery hold goal</Text>
+          <View style={styles.stepper}>
+            <Pressable
+              onPress={() => handleRecoveryHoldGoalChange(-5)}
+              disabled={recoveryHoldGoalSec <= recoveryHoldGoalLimit.min}
+              style={({ pressed }) => [styles.stepperButton, pressed && styles.stepperPressed]}
+            >
+              <Text style={styles.stepperText}>-</Text>
+            </Pressable>
+            <Text style={styles.rowValue}>{recoveryHoldGoalSec}s</Text>
+            <Pressable
+              onPress={() => handleRecoveryHoldGoalChange(5)}
+              disabled={recoveryHoldGoalSec >= recoveryHoldGoalLimit.max}
+              style={({ pressed }) => [styles.stepperButton, pressed && styles.stepperPressed]}
+            >
+              <Text style={styles.stepperText}>+</Text>
+            </Pressable>
+          </View>
+        </View>
+        <Text style={styles.hint}>Hold phases count up as stopwatches. Set goal times for when to consider the hold complete.</Text>
       </Card>
 
       <Card style={styles.section} tone="mist">
@@ -166,6 +252,11 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textMuted,
     marginTop: 2,
+  },
+  hint: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: spacing.sm,
   },
   rowValue: {
     ...typography.title,

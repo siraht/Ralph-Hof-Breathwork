@@ -198,10 +198,10 @@ export function ColdExposureScreen({ navigation }: Props) {
           <>
             <Button label="Log another timer" onPress={resetTimer} />
             <Button
-              label="View History"
+              label="View Results"
               onPress={() => {
                 resetTimer();
-                navigation.getParent()?.navigate('History');
+                navigation.getParent()?.navigate('ResultsTab');
               }}
               variant="ghost"
               style={styles.secondary}

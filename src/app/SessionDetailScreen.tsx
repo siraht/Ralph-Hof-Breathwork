@@ -143,7 +143,7 @@ export function SessionDetailScreen({ route, navigation }: Props) {
       ) : null}
 
       <View style={styles.actions}>
-        <Button label="Back to History" onPress={() => navigation.goBack()} variant="ghost" />
+        <Button label="Back to Results" onPress={() => navigation.goBack()} variant="ghost" />
       </View>
     </Screen>
   );

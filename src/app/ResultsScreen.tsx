@@ -47,25 +47,59 @@ function getDaysInMonth(year: number, month: number): number[] {
   return Array.from({ length: days }, (_, i) => i + 1);
 }
 
+function formatDuration(seconds: number): string {
+  if (seconds === 0) return '0m';
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+}
+
 export function ResultsScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<ResultsTab>('chart');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const { sessions, stats, load } = useSessionStore();
 
   useEffect(() => {
     load();
   }, [load]);
 
-  // Get days with sessions for the calendar
-  const now = new Date();
-  const [currentYear, currentMonth] = [now.getFullYear(), now.getMonth()];
-  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+  const formatTimer = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${pad(secs)}`;
+  };
+
+  // Get days with sessions for the selected calendar month
+  const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
   const completedDays = sessions
     .filter(s => {
       const d = new Date(s.endedAt);
-      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+      return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
     })
     .map(s => new Date(s.endedAt).getDate());
+
+  // Month navigation handlers
+  const handlePrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedYear(selectedYear - 1);
+      setSelectedMonth(11);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedYear(selectedYear + 1);
+      setSelectedMonth(0);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
 
   const renderChartView = () => (
     <View style={styles.tabContent}>
@@ -87,15 +121,15 @@ export function ResultsScreen({ navigation }: any) {
         </View>
       </Card>
 
-      {/* Total time cards - mock data */}
+      {/* Total time cards - using real data */}
       <View style={styles.grid}>
         <Card>
           <Text style={styles.cardTitle}>Total Time</Text>
-          <Text style={styles.cardValue}>2h 15m</Text>
+          <Text style={styles.cardValue}>{formatDuration(stats.totalDurationSec)}</Text>
         </Card>
         <Card tone="frost">
           <Text style={styles.cardTitle}>This Week</Text>
-          <Text style={styles.cardValue}>45m</Text>
+          <Text style={styles.cardValue}>{formatDuration(stats.thisWeekDurationSec)}</Text>
         </Card>
       </View>
 
@@ -119,79 +153,82 @@ export function ResultsScreen({ navigation }: any) {
     </View>
   );
 
-  const renderCalendarView = () => (
-    <View style={styles.tabContent}>
-      {/* Month selector */}
-      <View style={styles.monthRow}>
-        <TouchableOpacity style={styles.monthNav}>
-          <Text style={styles.monthNavText}>&lt;</Text>
-        </TouchableOpacity>
-        <Text style={styles.monthTitle}>
-          {new Date(currentYear, currentMonth).toLocaleDateString('en-US', {
-            month: 'long',
-            year: 'numeric',
-          })}
-        </Text>
-        <TouchableOpacity style={styles.monthNav}>
-          <Text style={styles.monthNavText}>&gt;</Text>
-        </TouchableOpacity>
-      </View>
+  const renderCalendarView = () => {
+    const now = new Date();
+    const firstDayOffset = new Date(selectedYear, selectedMonth, 1).getDay();
+    const isCurrentMonth = now.getFullYear() === selectedYear && now.getMonth() === selectedMonth;
 
-      {/* Calendar grid */}
-      <Card style={styles.calendarGrid}>
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-          <Text key={day} style={styles.dayHeader}>{day}</Text>
-        ))}
-        {daysInMonth.map(day => {
-          const isCompleted = completedDays.includes(day);
-          const isToday = day === now.getDate();
-          const dayOfWeek = new Date(currentYear, currentMonth, day).getDay();
-          // Grid positioning
-          const firstDayOffset = new Date(currentYear, currentMonth, 1).getDay();
-          const gridPosition = firstDayOffset + day - 1;
+    return (
+      <View style={styles.tabContent}>
+        {/* Month selector */}
+        <View style={styles.monthRow}>
+          <TouchableOpacity style={styles.monthNav} onPress={handlePrevMonth}>
+            <Text style={styles.monthNavText}>&lt;</Text>
+          </TouchableOpacity>
+          <Text style={styles.monthTitle}>
+            {new Date(selectedYear, selectedMonth).toLocaleDateString('en-US', {
+              month: 'long',
+              year: 'numeric',
+            })}
+          </Text>
+          <TouchableOpacity style={styles.monthNav} onPress={handleNextMonth}>
+            <Text style={styles.monthNavText}>&gt;</Text>
+          </TouchableOpacity>
+        </View>
 
-          return (
-            <View
-              key={day}
-              style={[
-                styles.dayCell,
-                gridPosition % 7 === 0 && styles.dayCellLast,
-              ]}
-            >
-              <Text
+        {/* Calendar grid */}
+        <Card style={styles.calendarGrid}>
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+            <Text key={day} style={styles.dayHeader}>{day}</Text>
+          ))}
+          {/* Offset cells for first day */}
+          {Array.from({ length: firstDayOffset }).map((_, i) => (
+            <View key={`offset-${i}`} style={styles.dayCell} />
+          ))}
+          {daysInMonth.map(day => {
+            const isCompleted = completedDays.includes(day);
+            const isToday = isCurrentMonth && day === now.getDate();
+
+            return (
+              <View
+                key={day}
                 style={[
-                  styles.dayNumber,
-                  isToday && styles.dayNumberToday,
+                  styles.dayCell,
+                  (firstDayOffset + day - 1) % 7 === 6 && styles.dayCellLast,
                 ]}
               >
-                {day}
-              </Text>
-              {isCompleted && <View style={styles.dayDot} />}
-            </View>
-          );
-        })}
-      </Card>
+                <Text
+                  style={[
+                    styles.dayNumber,
+                    isToday && styles.dayNumberToday,
+                  ]}
+                >
+                  {day}
+                </Text>
+                {isCompleted && <View style={styles.dayDot} />}
+              </View>
+            );
+          })}
+        </Card>
 
-      {/* Breathing basics card */}
-      <Card tone="frost">
-        <Text style={styles.cardTitle}>Breathing Basics</Text>
-        <View style={styles.basicsRow}>
-          <View style={styles.basicItem}>
-            <Text style={styles.basicValue}>{stats.currentStreak}</Text>
-            <Text style={styles.basicLabel}>Avg Streak</Text>
+        {/* Breathing basics card */}
+        <Card tone="frost">
+          <Text style={styles.cardTitle}>Breathing Basics</Text>
+          <View style={styles.basicsRow}>
+            <View style={styles.basicItem}>
+              <Text style={styles.basicValue}>{stats.currentStreak}</Text>
+              <Text style={styles.basicLabel}>Current Streak</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.basicItem}>
+              <Text style={styles.basicValue}>{formatTimer(stats.longestHoldSec)}</Text>
+              <Text style={styles.basicLabel}>Longest Hold</Text>
+            </View>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.basicItem}>
-            <Text style={styles.basicValue}>3m</Text>
-            <Text style={styles.basicLabel}>Longest Hold</Text>
-          </View>
-        </View>
-        <TouchableOpacity style={styles.logPill}>
-          <Text style={styles.logPillText}>Log Exercise</Text>
-        </TouchableOpacity>
-      </Card>
-    </View>
-  );
+        </Card>
+      </View>
+    );
+  };
 
   const renderBadgesView = () => (
     <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
