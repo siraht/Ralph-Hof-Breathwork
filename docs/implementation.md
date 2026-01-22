@@ -50,11 +50,11 @@
    - Log as session entry with stats.
 
 6. QA + Polish [DONE]
-   - Running logic validation tests via Bun - PASSING.
+   - Running logic validation tests via Bun - PASSING (verified 2026-01-22).
    - Accessibility: font scaling and reduced motion support done.
    - Platform-specific storage implemented for web export fix (AsyncStorage fallback on web, SQLite on native).
-   - TypeScript compilation passing for Expo SDK 54 compatibility.
-   - Web export verified successfully (`npx expo export --platform web`).
+   - TypeScript compilation passing for Expo SDK 54 compatibility (verified 2026-01-22).
+   - Web export verified successfully (`npx expo export --platform web` - verified 2026-01-22).
    - Manual device testing on web/iOS/Android recommended.
 
 ## Key Implementation Details
