@@ -42,13 +42,13 @@ The UI refresh focused on visual improvements only - all underlying data models,
 
 ### Implementation Summary
 
-**Completed Tasks (0-4 of 5):**
+**Completed Tasks (0-5 of 5):**
 - Task 0: Baseline Audit - DONE
 - Task 1: Add Settings for Pace + Hold Goals - DONE
 - Task 2: Breathing Engine: Variable Pace + Stopwatch Holds - DONE
 - Task 3: Breathing Session UI: Animated Circle + Simplified Labels - DONE
 - Task 4: Hold Phase Controls: Continue Beyond Goal - DONE
-- Task 5: Results/Stats Debugging - PENDING (may not be needed)
+- Task 5: Results/Stats Debugging - DONE (completed 2026-01-22)
 
 ### Key Implementation Decisions
 
@@ -88,9 +88,25 @@ The UI refresh focused on visual improvements only - all underlying data models,
 - Added `updateBreathingPace()`, `updateEmptyHoldGoal()`, `updateRecoveryHoldGoal()` methods
 - Settings migrated to v2 schema
 
-### Remaining Work
+**SessionStats (`sessionStats.ts`):**
+- Added `totalDurationSec`, `longestHoldSec`, `thisWeekDurationSec` for computing real stats across all sessions
 
-**Task 5** (Results/Stats Debugging with t-browser) is pending. The Results screen from the UI Refresh Plan may need verification to ensure session data displays correctly. This task depends on manual testing.
+**ResultsScreen (`ResultsScreen.tsx`):**
+- Fixed mock data: "Total Time" now shows real stats.totalDurationSec
+- Fixed mock data: "This Week" now shows real stats.thisWeekDurationSec
+- Fixed mock data: "Longest Hold" now shows real stats.longestHoldSec
+- Fixed "Avg Streak" label to "Current Streak"
+- Fixed calendar month navigation: added selectedYear/selectedMonth state with working handlers
+- Fixed calendar grid layout: added proper day offset cells for firstDayOfWeek
+- Removed non-functional "Log Exercise" button (no navigation path)
+
+**SettingsScreen (`SettingsScreen.tsx`):**
+- Added "Breathing pace" section with Slow/Standard/Fast SegmentedTabs
+- Added "Hold goals (stopwatch)" section with steppers for empty hold (0-180s) and recovery hold (5-30s)
+
+**Navigation Fixes:**
+- ColdExposureScreen: "View History" → "View Results" (navigates to ResultsTab)
+- SessionDetailScreen: "Back to History" → "Back to Results" (button label)
 
 ### Files Modified
 
@@ -103,6 +119,11 @@ The UI refresh focused on visual improvements only - all underlying data models,
 - src/state/breathingStore.ts
 - src/state/settingsStore.ts
 - src/storage/settingsStorage.ts
+- src/logic/sessionStats.ts (added totalDurationSec, longestHoldSec, thisWeekDurationSec)
+- src/app/ResultsScreen.tsx (fixed mock data, calendar navigation, grid layout)
+- src/app/ColdExposureScreen.tsx (fixed navigation to ResultsTab)
+- src/app/SessionDetailScreen.tsx (fixed button label)
+- src/app/SettingsScreen.tsx (added breathing pace and hold goal settings)
 
 ### QA Status
 
